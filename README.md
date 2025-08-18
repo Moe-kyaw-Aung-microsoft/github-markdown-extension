@@ -11,7 +11,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/your-username/github-markdown-extension">
-    <img src="src/icons/icon128.png" alt="Logo" width="80" height="80">
+    <img src="src/icons/icon128-dark.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">GitHub Markdown Exporter</h3>
