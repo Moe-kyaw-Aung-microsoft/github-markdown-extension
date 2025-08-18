@@ -180,7 +180,7 @@ For private repositories, you'll need a GitHub token:
 
 The extension generates clean, professional markdown with complete content:
 
-```markdown
+````markdown
 # [Amazing Feature Request](https://github.com/owner/repo/issues/123)
 
 > state: **open** opened by: **johndoe** on: **15/01/2024**
@@ -196,6 +196,7 @@ This would be an amazing feature to add...
    return true;
  }
 ```
+````
 
 ### Comments
 
@@ -204,11 +205,12 @@ This would be an amazing feature to add...
 > from: [**contributor**](https://github.com/contributor) on: **16/01/2024**
 
 Great idea! I think we should also consider...
-```
+
+````
 
 **Features included in export:**
 - 📋 **Complete metadata** - State, author, dates, and links
-- 💬 **All comments** - Including author information and timestamps  
+- 💬 **All comments** - Including author information and timestamps
 - 🔄 **Pull request diffs** - Full code changes when exporting PRs
 - 🎨 **Clean formatting** - Professional markdown structure
 - 🔗 **Preserved links** - All GitHub links remain functional
@@ -234,7 +236,7 @@ git clone https://github.com/your-username/github-markdown-extension.git
 # Load the extension in developer mode
 # Chrome: chrome://extensions/ → Enable Developer Mode → Load unpacked
 # Firefox: about:debugging → Load Temporary Add-on
-```
+````
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -1210,7 +1210,7 @@ class GitHubMarkdownExporter {
       try {
         console.log('GitHub Markdown Exporter: Fetching pull request diff...');
         const diffUrl = `https://api.github.com/repos/${owner}/${repo}/pulls/${number}`;
-        const diffResponse = await fetch(diffUrl, { 
+        const diffResponse = await fetch(diffUrl, {
           headers: {
             ...headers,
             'Accept': 'application/vnd.github.v3.diff'

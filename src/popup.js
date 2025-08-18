@@ -31,7 +31,7 @@ class PopupManager {
     this.saveTokenBtn.addEventListener('click', () => this.saveToken());
     this.clearTokenBtn.addEventListener('click', () => this.clearToken());
     this.refreshPageCheckBtn.addEventListener('click', () => this.checkAndDisplayPageInfo());
-    
+
     if (this.copyToClipboardBtn) {
       this.copyToClipboardBtn.addEventListener('click', () => this.copyToClipboard());
     }
@@ -47,7 +47,7 @@ class PopupManager {
     if (this.openT3ChatBtn) {
       this.openT3ChatBtn.addEventListener('click', () => this.openInT3Chat());
     }
-    
+
     this.tokenHelpLink.addEventListener('click', (e) => {
       e.preventDefault();
       this.toggleTokenInstructions();
@@ -165,7 +165,7 @@ class PopupManager {
 
   async checkAndDisplayPageInfo() {
     this.pageStatus.textContent = 'Checking current page...';
-    
+
     // Hide copy button and export dropdown initially
     if (this.copyToClipboardBtn) {
       this.copyToClipboardBtn.style.display = 'none';
@@ -217,7 +217,7 @@ class PopupManager {
 
   async copyToClipboard() {
     if (!this.copyToClipboardBtn) return;
-    
+
     this.copyToClipboardBtn.disabled = true;
 
     // Update button with loading icon and text
@@ -231,7 +231,7 @@ class PopupManager {
 
     try {
       const markdown = await this.fetchAndFormatMarkdown();
-      
+
       // Copy to clipboard
       await navigator.clipboard.writeText(markdown);
 
@@ -276,11 +276,11 @@ class PopupManager {
       const pathParts = url.pathname.split('/').filter(part => part !== '');
       const type = pathParts[2];
       const displayType = type === 'pull' ? 'pull request' : type.slice(0, -1);
-      
+
       const prompt = `Please analyze this ${displayType} from GitHub:\n\n${markdown}`;
       const encodedPrompt = encodeURIComponent(prompt);
       window.open(`https://chatgpt.com/?hints=search&q=${encodedPrompt}`, '_blank');
-      
+
       this.showStatus('✓ Opened in ChatGPT', 'success');
     } catch (error) {
       this.showStatus(`Failed to open in ChatGPT: ${error.message}`, 'error');
@@ -295,11 +295,11 @@ class PopupManager {
       const pathParts = url.pathname.split('/').filter(part => part !== '');
       const type = pathParts[2];
       const displayType = type === 'pull' ? 'pull request' : type.slice(0, -1);
-      
+
       const prompt = `Please analyze this ${displayType} from GitHub:\n\n${markdown}`;
       const encodedPrompt = encodeURIComponent(prompt);
       window.open(`https://claude.ai/new?q=${encodedPrompt}`, '_blank');
-      
+
       this.showStatus('✓ Opened in Claude', 'success');
     } catch (error) {
       this.showStatus(`Failed to open in Claude: ${error.message}`, 'error');
@@ -314,11 +314,11 @@ class PopupManager {
       const pathParts = url.pathname.split('/').filter(part => part !== '');
       const type = pathParts[2];
       const displayType = type === 'pull' ? 'pull request' : type.slice(0, -1);
-      
+
       const prompt = `Please analyze this ${displayType} from GitHub:\n\n${markdown}`;
       const encodedPrompt = encodeURIComponent(prompt);
       window.open(`https://t3.chat/new?q=${encodedPrompt}`, '_blank');
-      
+
       this.showStatus('✓ Opened in T3 Chat', 'success');
     } catch (error) {
       this.showStatus(`Failed to open in T3 Chat: ${error.message}`, 'error');
@@ -385,7 +385,7 @@ class PopupManager {
     if (type === 'pull') {
       try {
         const diffUrl = `https://api.github.com/repos/${owner}/${repo}/pulls/${number}`;
-        const diffResponse = await fetch(diffUrl, { 
+        const diffResponse = await fetch(diffUrl, {
           headers: {
             ...headers,
             'Accept': 'application/vnd.github.v3.diff'
@@ -426,9 +426,9 @@ class PopupManager {
   async exportCurrentPage() {
     // Use the export-current-page button (Save as File button)
     const targetBtn = this.exportCurrentPageBtn;
-    
+
     if (!targetBtn) return;
-    
+
     targetBtn.disabled = true;
 
     // Update button with loading icon and text
