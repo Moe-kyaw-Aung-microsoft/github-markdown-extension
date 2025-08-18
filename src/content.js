@@ -200,11 +200,21 @@ class GitHubMarkdownExporter {
 
     console.log('GitHub Markdown Exporter: Detected page info:', pageInfo);
 
-    // Remove existing buttons if present (there might be multiple)
-    const existingButtons = document.querySelectorAll('[id^="github-markdown-export-btn"]');
+    // Remove existing buttons if present (including groups)
+    const existingButtonGroups = document.querySelectorAll('[id^="github-markdown-export-btn"][id$="-group"]');
+    const existingButtons = document.querySelectorAll('[id^="github-markdown-export-btn"]:not([id$="-group"]):not([id$="-dropdown"]):not([id$="-menu"])');
+
+    existingButtonGroups.forEach(group => {
+      group.remove();
+      console.log('GitHub Markdown Exporter: Removed existing button group');
+    });
+
     existingButtons.forEach(btn => {
-      btn.remove();
-      console.log('GitHub Markdown Exporter: Removed existing button');
+      // Remove standalone buttons that might not be in groups
+      if (!btn.closest('[id$="-group"]')) {
+        btn.remove();
+        console.log('GitHub Markdown Exporter: Removed existing standalone button');
+      }
     });
 
     // For GitHub's responsive design, we need to add buttons to both mobile and desktop containers
@@ -216,10 +226,57 @@ class GitHubMarkdownExporter {
 
     console.log(`GitHub Markdown Exporter: Found ${containers.length} button containers`);
 
+    // Check if user is author (has edit button) for better placement context
+    const hasEditButton = document.querySelector('[data-testid="edit-issue-title-button"], .js-title-edit-button, .js-details-target[aria-label*="Edit"]');
+    const isAuthor = !!hasEditButton;
+    console.log(`GitHub Markdown Exporter: User appears to be author: ${isAuthor}`);
+
+    // Detect page type for placement logic
+    const url = window.location.href;
+    const isIssue = url.includes('/issues/');
+    const isDiscussion = url.includes('/discussions/');
+    const isPullRequest = url.includes('/pull/');
+
     let addedCount = 0;
     containers.forEach((container, index) => {
+      // Skip hidden containers on desktop when we have visible ones
+      if (containers.length > 1 && this.isHidden(container)) {
+        console.log(`GitHub Markdown Exporter: Skipping hidden container ${index + 1}`);
+        return;
+      }
+
       const exportButton = this.createExportButton(pageInfo, `github-markdown-export-btn-${index}`);
-      container.appendChild(exportButton);
+
+      // Special placement logic for Issues vs Pull Requests/Discussions
+      if (isIssue) {
+        // For Issues: Place after the "New issue" button and BEFORE the Copy link button
+        // Identify buttons
+        const newIssueButton = container.querySelector('a[href$="/issues/new"], a[data-hotkey="c"]');
+        const copyLinkButton = container.querySelector('button[data-component="IconButton"][aria-labelledby]');
+
+        if (copyLinkButton) {
+          // Insert before copy link button (which keeps us to its left)
+          container.insertBefore(exportButton, copyLinkButton);
+        } else if (newIssueButton) {
+          // Fallback: insert right after New issue button
+          if (newIssueButton.nextSibling) {
+            newIssueButton.parentNode.insertBefore(exportButton, newIssueButton.nextSibling);
+          } else {
+            newIssueButton.parentNode.appendChild(exportButton);
+          }
+        } else {
+          // Final fallback
+          container.appendChild(exportButton);
+        }
+      } else {
+        // For PRs/Discussions: Simply append and use CSS order for proper positioning
+        container.appendChild(exportButton);
+
+        if (isPullRequest) {
+          this.adjustPullRequestButtonSizing(container);
+        }
+      }
+
       addedCount++;
       console.log(`GitHub Markdown Exporter: Added button ${index + 1} to container`);
     });
@@ -229,15 +286,33 @@ class GitHubMarkdownExporter {
   }
 
   createExportButton(pageInfo, buttonId) {
-    // Create button group container with spacing
+    // Detect container context for optimal styling
+    const url = window.location.href;
+    const isIssue = url.includes('/issues/');
+    const isDiscussion = url.includes('/discussions/');
+    const isPullRequest = url.includes('/pull/');
+
+    // Create button group container with context-aware spacing
     const buttonGroup = document.createElement('div');
     buttonGroup.id = `${buttonId}-group`;
+
+    // Adjust margins based on context
+    let marginLeft = '0.25rem';
+    if (isIssue) {
+      // In issues, no left margin to align with adjacent buttons
+      marginLeft = '0';
+    } else if (isPullRequest) {
+      // In discussions/PRs, no left margin - use CSS order for positioning
+      marginLeft = '0';
+    }
+
     buttonGroup.style.cssText = `
       display: flex;
       align-items: center;
       gap: 0;
-      margin-left: 8px;
+      margin-left: ${marginLeft};
       position: relative;
+      ${isPullRequest ? 'order: 3;' : ''}
     `;
 
     // Create main export button (copy to clipboard)
@@ -316,6 +391,39 @@ class GitHubMarkdownExporter {
     buttonGroup.appendChild(dropdownMenu);
 
     return buttonGroup;
+  }
+
+  adjustPullRequestButtonSizing(container) {
+    // Find Edit and Code buttons in Pull Requests and adjust their size to match our medium button
+    const editButton = container.querySelector('.js-title-edit-button, .js-details-target');
+    const codeButton = container.querySelector('[class*="Button--secondary"][class*="Button--small"]');
+
+    // Adjust Edit button to medium size
+    if (editButton && editButton.classList.contains('Button--small')) {
+      editButton.classList.remove('Button--small');
+      editButton.classList.add('Button--medium');
+      editButton.setAttribute('data-size', 'medium');
+      console.log('GitHub Markdown Exporter: Adjusted Edit button to medium size');
+    }
+
+    // Adjust Code button to medium size
+    if (codeButton && codeButton.classList.contains('Button--small')) {
+      codeButton.classList.remove('Button--small');
+      codeButton.classList.add('Button--medium');
+      codeButton.setAttribute('data-size', 'medium');
+      console.log('GitHub Markdown Exporter: Adjusted Code button to medium size');
+    }
+
+    // Also adjust any nested buttons in the Code dropdown
+    const codeDropdown = container.querySelector('get-repo details');
+    if (codeDropdown) {
+      const codeButtonInDropdown = codeDropdown.querySelector('summary[class*="Button--small"]');
+      if (codeButtonInDropdown && codeButtonInDropdown.classList.contains('Button--small')) {
+        codeButtonInDropdown.classList.remove('Button--small');
+        codeButtonInDropdown.classList.add('Button--medium');
+        console.log('GitHub Markdown Exporter: Adjusted Code dropdown button to medium size');
+      }
+    }
   }
 
   createDropdownMenu(pageInfo, buttonId) {
@@ -472,50 +580,75 @@ class GitHubMarkdownExporter {
   findAllButtonContainers() {
     const containers = [];
 
-    // Strategy 1: Find all button containers (both visible and mobile-hidden)
-    const buttonContainerSelectors = [
-      // Main actions area (desktop)
-      '[data-component="PH_Actions"] .HeaderMenu-module__menuActionsContainer--Gf9W9',
-      '.prc-PageHeader-Actions-ygtmj .HeaderMenu-module__menuActionsContainer--Gf9W9',
-      '.HeaderViewer-module__PageHeader_Actions--SRZVA .HeaderMenu-module__menuActionsContainer--Gf9W9',
+    // Detect page type for targeted approach
+    const url = window.location.href;
+    const isIssue = url.includes('/issues/');
+    const isDiscussion = url.includes('/discussions/');
+    const isPullRequest = url.includes('/pull/');
 
-      // Context area (mobile)
-      '.prc-PageHeader-ContextAreaActions-RTJRk .HeaderMenu-module__menuActionsContainer--Gf9W9',
-      '.HeaderViewer-module__PageHeader_ContextAreaActions--zjX2m .HeaderMenu-module__menuActionsContainer--Gf9W9',
+    console.log(`GitHub Markdown Exporter: Detected page type - Issue: ${isIssue}, Discussion: ${isDiscussion}, PR: ${isPullRequest}`);
 
-      // Discussions
-      '.gh-header-actions'
-    ];
+    if (isIssue) {
+      // Issues use the new responsive header design
+      const issueContainerSelectors = [
+        // Main actions area (desktop) - primary target
+        '[data-component="PH_Actions"] .HeaderMenu-module__menuActionsContainer--Gf9W9',
+        '.prc-PageHeader-Actions-ygtmj .HeaderMenu-module__menuActionsContainer--Gf9W9',
+        '.HeaderViewer-module__PageHeader_Actions--SRZVA .HeaderMenu-module__menuActionsContainer--Gf9W9',
 
-    buttonContainerSelectors.forEach(selector => {
-      const container = document.querySelector(selector);
-      if (container && !containers.includes(container)) {
-        containers.push(container);
-        console.log(`Found container with selector: ${selector}`);
-      }
-    });
+        // Context area (mobile/responsive) - secondary target
+        '.prc-PageHeader-ContextAreaActions-RTJRk .HeaderMenu-module__menuActionsContainer--Gf9W9',
+        '.HeaderViewer-module__PageHeader_ContextAreaActions--zjX2m .HeaderMenu-module__menuActionsContainer--Gf9W9'
+      ];
 
-    // Strategy 2: If no containers found, look for action areas
-    if (containers.length === 0) {
-      const actionAreaSelectors = [
-        '[data-component="PH_Actions"]',
-        '.prc-PageHeader-Actions-ygtmj',
-        '.HeaderViewer-module__PageHeader_Actions--SRZVA',
-        '.prc-PageHeader-ContextAreaActions-RTJRk',
-        '.HeaderViewer-module__PageHeader_ContextAreaActions--zjX2m',
+      issueContainerSelectors.forEach(selector => {
+        const container = document.querySelector(selector);
+        if (container && !containers.includes(container)) {
+          containers.push(container);
+          console.log(`Found issue container with selector: ${selector}`);
+        }
+      });
+    }
+    else if (isDiscussion || isPullRequest) {
+      // Discussions and PRs use the older .gh-header-actions design
+      const discussionPRSelectors = [
         '.gh-header-actions'
       ];
 
-      actionAreaSelectors.forEach(selector => {
-        const area = document.querySelector(selector);
-        if (area && !containers.includes(area)) {
-          containers.push(area);
-          console.log(`Found action area with selector: ${selector}`);
+      discussionPRSelectors.forEach(selector => {
+        const container = document.querySelector(selector);
+        if (container && !containers.includes(container)) {
+          containers.push(container);
+          console.log(`Found discussion/PR container with selector: ${selector}`);
         }
       });
     }
 
-    // Strategy 3: Create containers if none found
+    // Fallback: If no specific containers found, try broader selectors
+    if (containers.length === 0) {
+      const fallbackSelectors = [
+        // Try to find any menu actions container
+        '.HeaderMenu-module__menuActionsContainer--Gf9W9',
+        '.gh-header-actions',
+
+        // Action areas as containers
+        '[data-component="PH_Actions"]',
+        '.prc-PageHeader-Actions-ygtmj',
+        '.HeaderViewer-module__PageHeader_Actions--SRZVA',
+        '.prc-PageHeader-ContextAreaActions-RTJRk',
+        '.HeaderViewer-module__PageHeader_ContextAreaActions--zjX2m'
+      ];
+
+      fallbackSelectors.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element && !containers.includes(element)) {
+          containers.push(element);
+          console.log(`Found fallback container with selector: ${selector}`);
+        }
+      });
+    }
+
+    // Last resort: Create containers if none found
     if (containers.length === 0) {
       const createdContainer = this.createButtonContainer();
       if (createdContainer) {
@@ -523,6 +656,7 @@ class GitHubMarkdownExporter {
       }
     }
 
+    console.log(`GitHub Markdown Exporter: Found ${containers.length} total containers`);
     return containers;
   }
 
@@ -596,43 +730,64 @@ class GitHubMarkdownExporter {
   }
 
   createButtonContainer() {
-    // Try different strategies to create a button container
+    // Detect page type for targeted container creation
+    const url = window.location.href;
+    const isIssue = url.includes('/issues/');
+    const isDiscussion = url.includes('/discussions/');
+    const isPullRequest = url.includes('/pull/');
 
-    // Strategy 3a: For new issues UI - add to context area
-    const contextArea = document.querySelector('.prc-PageHeader-ContextArea-6ykSJ, .HeaderViewer-module__headerContainer--kkVCB');
-    if (contextArea) {
-      console.log('Creating container in context area');
-      const container = document.createElement('div');
-      container.className = 'HeaderMenu-module__menuActionsContainer--custom prc-PageHeader-ContextAreaActions-RTJRk';
-      container.style.display = 'flex';
-      container.style.gap = '8px';
-      container.style.alignItems = 'center';
-      container.style.marginLeft = '8px';
+    console.log(`Creating container for page type - Issue: ${isIssue}, Discussion: ${isDiscussion}, PR: ${isPullRequest}`);
 
-      // Find the best insertion point
-      const existingActions = contextArea.querySelector('.prc-PageHeader-ContextAreaActions-RTJRk, .HeaderViewer-module__PageHeader_ContextAreaActions--zjX2m');
-      if (existingActions) {
-        existingActions.appendChild(container);
-      } else {
-        contextArea.appendChild(container);
+    if (isIssue) {
+      // Strategy for Issues: Create in context area or main header
+      const contextArea = document.querySelector('.prc-PageHeader-ContextArea-6ykSJ, .HeaderViewer-module__headerContainer--kkVCB');
+      if (contextArea) {
+        console.log('Creating issue container in context area');
+        const container = document.createElement('div');
+        container.className = 'HeaderMenu-module__menuActionsContainer--custom';
+        container.style.cssText = `
+          display: flex;
+          gap: 0;
+          align-items: center;
+          margin-left: 8px;
+        `;
+
+        // Find the best insertion point in context area
+        const existingActions = contextArea.querySelector('.prc-PageHeader-ContextAreaActions-RTJRk, .HeaderViewer-module__PageHeader_ContextAreaActions--zjX2m');
+        if (existingActions) {
+          existingActions.appendChild(container);
+        } else {
+          // Create a context actions wrapper
+          const actionsWrapper = document.createElement('div');
+          actionsWrapper.className = 'prc-PageHeader-ContextAreaActions-RTJRk';
+          actionsWrapper.appendChild(container);
+          contextArea.appendChild(actionsWrapper);
+        }
+        return container;
       }
-      return container;
     }
+    else if (isDiscussion || isPullRequest) {
+      // Strategy for Discussions/PRs: Create in gh-header-actions area
+      const headerShow = document.querySelector('.gh-header-show');
+      if (headerShow) {
+        console.log('Creating discussion/PR container in gh-header-actions');
 
-    // Strategy 3b: For discussions - add to gh-header-actions area
-    const discussionHeader = document.querySelector('.gh-header-show .d-flex.flex-column.flex-md-row');
-    if (discussionHeader) {
-      console.log('Creating container for discussion');
-      let actionsContainer = discussionHeader.querySelector('.gh-header-actions');
+        // Look for existing .gh-header-actions
+        let actionsContainer = headerShow.querySelector('.gh-header-actions');
 
-      if (!actionsContainer) {
-        // Create the actions container
-        actionsContainer = document.createElement('div');
-        actionsContainer.className = 'gh-header-actions mt-0 mt-md-1 mb-2 mb-md-0 flex-shrink-0 d-flex';
-        discussionHeader.appendChild(actionsContainer);
+        if (actionsContainer) {
+          return actionsContainer;
+        } else {
+          // Create new .gh-header-actions container
+          const headerRow = headerShow.querySelector('.d-flex.flex-column.flex-md-row, .d-flex.flex-column.flex-md-row.flex-items-start');
+          if (headerRow) {
+            actionsContainer = document.createElement('div');
+            actionsContainer.className = 'gh-header-actions mt-0 mt-md-1 mb-2 mb-md-0 flex-shrink-0 d-flex';
+            headerRow.appendChild(actionsContainer);
+            return actionsContainer;
+          }
+        }
       }
-
-      return actionsContainer;
     }
 
     // Strategy 3c: Find title and create container nearby

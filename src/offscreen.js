@@ -10,7 +10,7 @@ function detectAndSendTheme() {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'detect-theme') {
     detectAndSendTheme();
-    sendResponse({success: true});
+    sendResponse({ success: true });
   }
 });
 

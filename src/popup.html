@@ -305,6 +305,9 @@
             font-size: 12px;
             color: #656d76;
             margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .made-by a {
@@ -318,8 +321,13 @@
 
         /* Animation for spinning loader */
         @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Dark mode support - follows system theme */

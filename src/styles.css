@@ -3,7 +3,7 @@
 #github-markdown-export-btn {
   /* Use GitHub's default button styling but add custom overrides */
   margin-left: 8px !important;
-  
+
   /* Ensure button has proper styling if GitHub classes don't fully apply */
   display: inline-flex !important;
   align-items: center !important;
@@ -56,6 +56,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -78,12 +79,12 @@
     background-color: var(--button-default-bgColor-rest, #21262d) !important;
     border-color: var(--button-default-borderColor-rest, #30363d) !important;
   }
-  
+
   #github-markdown-export-btn:hover {
     background-color: var(--button-default-bgColor-hover, #30363d) !important;
     border-color: var(--button-default-borderColor-hover, #8b949e) !important;
   }
-  
+
   #github-markdown-export-btn:active {
     background-color: var(--button-default-bgColor-active, #282e33) !important;
     border-color: var(--button-default-borderColor-active, #6e7681) !important;

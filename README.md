@@ -1,6 +1,7 @@
 <a id="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
+
 [![GitHub Issues][issues-shield]][issues-url]
 [![GitHub License][license-shield]][license-url]
 [![Chrome Web Store][chrome-shield]][chrome-url]
@@ -51,23 +52,26 @@
 Ever wanted to save GitHub issues, discussions, or pull requests for offline reading or documentation? This browser extension adds a simple "Copy to Markdown" button that exports the complete content - including all comments and metadata - to perfectly formatted markdown!
 
 **Why this extension?**
-* 🚀 **One-click export** - No complex setup or API tokens required
-* 📱 **Works everywhere** - Issues, discussions, and pull requests 
-* 🎨 **Beautiful output** - Clean, readable markdown format
-* 🌗 **Theme-aware** - Extension icon adapts to your browser theme
-* 🔒 **Privacy-first** - No data collection, everything stays local
+
+- 🚀 **One-click export** - No complex setup or API tokens required
+- 📱 **Works everywhere** - Issues, discussions, and pull requests
+- 🎨 **Beautiful output** - Clean, readable markdown format
+- 🌗 **Theme-aware** - Extension icon adapts to your browser theme
+- 🔒 **Privacy-first** - No data collection, everything stays local
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Features
 
 ### ✨ Core Features
+
 - **🎯 Smart Detection** - Automatically detects GitHub issues, discussions, and pull requests
 - **📋 One-Click Export** - Click the button and markdown is copied to your clipboard
 - **🔄 Real-time Navigation** - Works with GitHub's single-page app navigation
 - **🌙 Theme-Aware Icons** - Extension icon automatically matches your browser theme
 
-### 🛠️ Advanced Features  
+### 🛠️ Advanced Features
+
 - **🔐 Private Repository Support** - Optional GitHub token for private repos
 - **⚡ Rate Limit Protection** - Built-in handling for GitHub API limits
 - **🎨 Clean Markdown Output** - Professional formatting with metadata
@@ -78,20 +82,24 @@ Ever wanted to save GitHub issues, discussions, or pull requests for offline rea
 ## Installation
 
 ### Chrome
+
 1. Download the extension from the [Chrome Web Store][chrome-url]
 2. Click "Add to Chrome"
 3. You're ready to go! 🎉
 
-### Firefox  
+### Firefox
+
 1. Download from [Firefox Add-ons][firefox-url]
 2. Click "Add to Firefox"
 3. Start exporting! 🔥
 
 ### Manual Installation (Developer Mode)
+
 <details>
 <summary>Click to expand manual installation steps</summary>
 
 #### Chrome
+
 1. Download or clone this repository
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" in the top right
@@ -99,7 +107,8 @@ Ever wanted to save GitHub issues, discussions, or pull requests for offline rea
 5. The extension is now installed! ✅
 
 #### Firefox
-1. Download or clone this repository  
+
+1. Download or clone this repository
 2. Open Firefox and navigate to `about:debugging`
 3. Click "This Firefox" in the sidebar
 4. Click "Load Temporary Add-on"
@@ -115,21 +124,24 @@ Ever wanted to save GitHub issues, discussions, or pull requests for offline rea
 ### Basic Usage
 
 1. **Navigate to any GitHub issue, discussion, or pull request**
+
    ```
    https://github.com/owner/repo/issues/123
-   https://github.com/owner/repo/discussions/456  
+   https://github.com/owner/repo/discussions/456
    https://github.com/owner/repo/pull/789
    ```
 
-2. **Look for the "Copy to Markdown" button** 
+2. **Look for the "Copy to Markdown" button**
+
    - Appears automatically near other action buttons
    - Has a download icon 📥
 
 3. **Click the button**
+
    - Content is instantly copied to your clipboard
    - Success message confirms the export
 
-4. **Paste anywhere you need it!** 
+4. **Paste anywhere you need it!**
    - Documentation, notes, reports - you name it! 📝
 
 ### Private Repositories
@@ -141,6 +153,7 @@ For private repositories, you'll need a GitHub token:
 3. Click "Save Token"
 
 **Token Requirements:**
+
 - `repo` scope for private repositories
 - `public_repo` scope for public repositories only
 
@@ -160,6 +173,7 @@ This would be an amazing feature to add...
 ### Comments
 
 ---
+
 > from: [**contributor**](https://github.com/contributor) on: **16/01/2024**
 
 Great idea! I think we should also consider...
@@ -206,6 +220,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 </div>
 
 <!-- MARKDOWN LINKS & IMAGES -->
+
 [issues-shield]: https://img.shields.io/github/issues/your-username/github-markdown-extension.svg?style=for-the-badge
 [issues-url]: https://github.com/your-username/github-markdown-extension/issues
 [license-shield]: https://img.shields.io/github/license/your-username/github-markdown-extension.svg?style=for-the-badge

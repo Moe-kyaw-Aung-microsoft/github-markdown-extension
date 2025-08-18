@@ -1,8 +1,8 @@
 // Content script for theme detection
-(function() {
+(function () {
   function sendTheme() {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    chrome.runtime.sendMessage({scheme: isDark ? 'dark' : 'light'});
+    chrome.runtime.sendMessage({ scheme: isDark ? 'dark' : 'light' });
   }
 
   sendTheme();

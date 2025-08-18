@@ -7,7 +7,7 @@ function updateIcon(scheme) {
     "128": scheme === "dark" ? "icons/icon128-dark.png" : "icons/icon128.png"
   };
 
-  chrome.action.setIcon({path: iconPaths});
+  chrome.action.setIcon({ path: iconPaths });
 }
 
 // Detect browser and create offscreen document for Chrome
@@ -29,7 +29,7 @@ async function createOffscreenDocument() {
       reasons: ['DISPLAY_MEDIA'],
       justification: 'Detect user theme preference for icon adaptation'
     });
-    
+
     return true;
   } catch (error) {
     return false;
@@ -40,7 +40,7 @@ async function createOffscreenDocument() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.scheme || request.action === 'theme-detected') {
     updateIcon(request.scheme);
-    sendResponse({success: true});
+    sendResponse({ success: true });
   }
   return true;
 });
@@ -51,7 +51,7 @@ async function initializeTheme() {
     const success = await createOffscreenDocument();
     if (success) {
       setTimeout(() => {
-        chrome.runtime.sendMessage({action: 'detect-theme'}).catch(() => {
+        chrome.runtime.sendMessage({ action: 'detect-theme' }).catch(() => {
           updateIcon('light');
         });
       }, 100);
