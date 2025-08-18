@@ -1,0 +1,91 @@
+/* GitHub Markdown Exporter - Content Script Styles */
+
+#github-markdown-export-btn {
+  /* Use GitHub's default button styling but add custom overrides */
+  margin-left: 8px !important;
+  
+  /* Ensure button has proper styling if GitHub classes don't fully apply */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 5px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 20px !important;
+  color: var(--fgColor-default, #24292f) !important;
+  background-color: var(--button-default-bgColor-rest, #f6f8fa) !important;
+  border: 1px solid var(--button-default-borderColor-rest, #d0d7de) !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+  user-select: none !important;
+  transition: 80ms cubic-bezier(0.33, 1, 0.68, 1) !important;
+}
+
+#github-markdown-export-btn:hover {
+  background-color: var(--button-default-bgColor-hover, #f3f4f6) !important;
+  border-color: var(--button-default-borderColor-hover, #d0d7de) !important;
+  text-decoration: none !important;
+}
+
+#github-markdown-export-btn:active {
+  background-color: var(--button-default-bgColor-active, #edeff2) !important;
+  border-color: var(--button-default-borderColor-active, #d0d7de) !important;
+}
+
+#github-markdown-export-btn:disabled {
+  color: var(--fgColor-disabled, #8c959f) !important;
+  background-color: var(--button-default-bgColor-rest, #f6f8fa) !important;
+  border-color: var(--button-default-borderColor-rest, #d0d7de) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+#github-markdown-export-btn .octicon {
+  vertical-align: middle !important;
+  fill: currentColor !important;
+}
+
+#github-markdown-export-btn .anim-rotate {
+  animation: github-markdown-export-rotate 1s linear infinite !important;
+}
+
+@keyframes github-markdown-export-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Ensure button fits well in different GitHub layouts */
+.gh-header-actions #github-markdown-export-btn {
+  height: 32px !important;
+}
+
+.timeline-comment-header #github-markdown-export-btn {
+  height: 28px !important;
+  font-size: 11px !important;
+}
+
+/* Dark mode support - rely on GitHub's CSS variables */
+@media (prefers-color-scheme: dark) {
+  #github-markdown-export-btn {
+    color: var(--fgColor-default, #e6edf3) !important;
+    background-color: var(--button-default-bgColor-rest, #21262d) !important;
+    border-color: var(--button-default-borderColor-rest, #30363d) !important;
+  }
+  
+  #github-markdown-export-btn:hover {
+    background-color: var(--button-default-bgColor-hover, #30363d) !important;
+    border-color: var(--button-default-borderColor-hover, #8b949e) !important;
+  }
+  
+  #github-markdown-export-btn:active {
+    background-color: var(--button-default-bgColor-active, #282e33) !important;
+    border-color: var(--button-default-borderColor-active, #6e7681) !important;
+  }
+}

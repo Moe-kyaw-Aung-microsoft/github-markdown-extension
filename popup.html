@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 420px;
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #1f2328;
+            background: #ffffff;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0969da 0%, #2188ff 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #d1d9e0;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .header-icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 13px;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2328;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-icon {
+            width: 16px;
+            height: 16px;
+            fill: #656d76;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1f2328;
+            font-size: 14px;
+        }
+
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d9e0;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+        }
+
+        input[type="password"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #0969da;
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.12);
+        }
+
+        .btn {
+            background: #1f883d;
+            color: white;
+            border: 1px solid rgba(31, 35, 40, 0.15);
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #1a7f37;
+        }
+
+        .btn:disabled {
+            background: #8c959f;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-primary {
+            background: #0969da;
+        }
+
+        .btn-primary:hover {
+            background: #0860ca;
+        }
+
+        .btn-secondary {
+            background: #f6f8fa;
+            color: #24292f;
+            border: 1px solid rgba(31, 35, 40, 0.15);
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #0969da;
+            border: 1px solid #0969da;
+        }
+
+        .btn-outline:hover {
+            background: #0969da;
+            color: white;
+        }
+
+        .status {
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status.success {
+            background: #dafbe1;
+            color: #1a7f37;
+            border: 1px solid #a2e2b2;
+        }
+
+        .status.error {
+            background: #ffebe9;
+            color: #d1242f;
+            border: 1px solid #f85149;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #656d76;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .button-group button {
+            flex: 1;
+        }
+
+        .feature-list {
+            margin: 12px 0 0 0;
+            padding-left: 0;
+            color: #656d76;
+            font-size: 13px;
+            list-style: none;
+        }
+
+        .feature-list li {
+            margin-bottom: 8px;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #1f883d;
+            font-weight: 600;
+        }
+
+        .link {
+            color: #0969da;
+            text-decoration: none;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .instructions {
+            background: #f6f8fa;
+            border: 1px solid #d1d9e0;
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .instructions h4 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2328;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .instructions code {
+            background: #afb8c133;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+            font-size: 12px;
+        }
+
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .collapsible:hover {
+            color: #0969da;
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.expanded {
+            max-height: 600px;
+        }
+
+        .note {
+            background: #fff8c5;
+            border: 1px solid #d4ac0d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .note-icon {
+            width: 16px;
+            height: 16px;
+            fill: #9a6700;
+            margin-right: 6px;
+            vertical-align: text-top;
+        }
+
+        .made-by {
+            font-size: 12px;
+            color: #656d76;
+            margin-top: 8px;
+        }
+
+        .made-by a {
+            color: #0969da;
+            text-decoration: none;
+        }
+
+        .made-by a:hover {
+            text-decoration: underline;
+        }
+
+        /* Dark mode support - follows system theme */
+        @media (prefers-color-scheme: dark) {
+            body {
+                color: #e6edf3;
+                background: #0d1117;
+            }
+
+            .header {
+                background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+                border-bottom: 1px solid #30363d;
+            }
+
+            .section h3 {
+                color: #e6edf3;
+            }
+
+            .section-icon {
+                fill: #8b949e;
+            }
+
+            label {
+                color: #e6edf3;
+            }
+
+            input[type="password"],
+            input[type="text"] {
+                background: #21262d;
+                border: 1px solid #30363d;
+                color: #e6edf3;
+            }
+
+            input[type="password"]:focus,
+            input[type="text"]:focus {
+                border-color: #1f6feb;
+                box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
+            }
+
+            .btn-primary {
+                background: #1f6feb;
+            }
+
+            .btn-primary:hover {
+                background: #1a63e8;
+            }
+
+            .btn-secondary {
+                background: #21262d;
+                color: #e6edf3;
+                border: 1px solid #30363d;
+            }
+
+            .btn-secondary:hover {
+                background: #30363d;
+            }
+
+            .btn-outline {
+                color: #1f6feb;
+                border: 1px solid #1f6feb;
+            }
+
+            .btn-outline:hover {
+                background: #1f6feb;
+                color: white;
+            }
+
+            .status.success {
+                background: #0f2419;
+                color: #3fb950;
+                border: 1px solid #1b3a20;
+            }
+
+            .status.error {
+                background: #2d1117;
+                color: #f85149;
+                border: 1px solid #4c1b1b;
+            }
+
+            .help-text {
+                color: #8b949e;
+            }
+
+            .feature-list {
+                color: #8b949e;
+            }
+
+            .feature-list li::before {
+                color: #3fb950;
+            }
+
+            .link {
+                color: #58a6ff;
+            }
+
+            .instructions {
+                background: #161b22;
+                border: 1px solid #30363d;
+            }
+
+            .instructions h4 {
+                color: #e6edf3;
+            }
+
+            .instructions code {
+                background: rgba(110, 118, 129, 0.15);
+                color: #e6edf3;
+            }
+
+            .note {
+                background: #2d2a00;
+                border: 1px solid #4d4500;
+                color: #f7d000;
+            }
+
+            .note-icon {
+                fill: #f7d000;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>
+            <svg class="header-icon" viewBox="0 0 16 16">
+                <path
+                    d="M7.47 10.78a.75.75 0 001.06 0l3.75-3.75a.75.75 0 00-1.06-1.06L8.75 8.44V1.75a.75.75 0 00-1.5 0v6.69L4.78 5.97a.75.75 0 00-1.06 1.06l3.75 3.75zM3.75 13a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5z" />
+            </svg>
+            GitHub Markdown Exporter
+        </h1>
+        <p>Export GitHub issues, pull requests, and discussions to markdown format</p>
+    </div>
+
+    <div class="content">
+        <div id="status-container"></div>
+
+        <div class="section">
+            <h3>
+                <svg class="section-icon" viewBox="0 0 16 16">
+                    <path
+                        d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.879-2.773 4.264 2.559a.25.25 0 0 1 0 .428l-4.264 2.559A.25.25 0 0 1 6 10.559V5.442a.25.25 0 0 1 .379-.215Z" />
+                </svg>
+                How to Use
+            </h3>
+            <ul class="feature-list">
+                <li>Navigate to any GitHub issue, pull request, or discussion</li>
+                <li>Look for the "Copy to Markdown" button</li>
+                <li>Click the button to export content</li>
+                <li>Markdown will be copied to your clipboard</li>
+                <li>No token needed for public repositories</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>
+                <svg class="section-icon" viewBox="0 0 16 16">
+                    <path
+                        d="M8 0a8.2 8.2 0 0 1 .701.031C9.444.095 9.99.645 10.16 1.29l.288 1.107c.018.066.079.158.212.224.231.114.454.243.668.386.123.082.233.09.299.071l1.103-.303c.644-.176 1.392.021 1.82.63.27.385.506.792.704 1.218.315.675.111 1.422-.364 1.891l-.814.806c-.049.048-.098.147-.088.294.016.257.016.515 0 .772-.01.147.039.246.088.294l.814.806c.475.469.679 1.216.364 1.891a7.977 7.977 0 0 1-.704 1.218c-.428.609-1.176.806-1.82.63l-1.103-.303c-.066-.019-.176-.011-.299.071a4.909 4.909 0 0 1-.668.386c-.133.066-.194.158-.212.224l-.288 1.107c-.169.645-.715 1.195-1.459 1.259a8.006 8.006 0 0 1-1.402 0c-.744-.064-1.29-.614-1.459-1.259l-.288-1.107c-.018-.066-.079-.158-.212-.224a4.875 4.875 0 0 1-.668-.386c-.123-.082-.233-.09-.299-.071l-1.103.303c-.644.176-1.392-.021-1.82-.63a8.12 8.12 0 0 1-.704-1.218c-.315-.675-.111-1.422.363-1.891l.815-.806c.05-.048.098-.147.088-.294a6.214 6.214 0 0 1 0-.772c.01-.147-.038-.246-.088-.294l-.815-.806C.635 6.045.431 5.298.746 4.623a7.92 7.92 0 0 1 .704-1.217c.428-.61 1.176-.807 1.82-.631l1.103.303c.066.019.176.011.299-.071.214-.143.437-.272.668-.386.133-.066.194-.158.212-.224l.288-1.107C5.009.645 5.555.095 6.299.03 6.876-.025 7.124-.025 8 0ZM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+                </svg>
+                GitHub Token Setup
+            </h3>
+
+            <div class="form-group">
+                <label for="github-token">Personal Access Token</label>
+                <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                <div class="help-text">
+                    Required for private repositories and to avoid rate limits.
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" id="save-token">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path
+                            d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                    </svg>
+                    Save Token
+                </button>
+                <button type="button" class="btn btn-secondary" id="clear-token">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path
+                            d="M6.5 1.75a.25.25 0 01.25-.25h2.5a.25.25 0 01.25.25V3h-3V1.75zm4.5 0V3h2.25a.75.75 0 010 1.5H2.75a.75.75 0 010-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75zM4.496 6.675a.75.75 0 10-1.492.15l.66 6.6A1.75 1.75 0 005.405 15h5.19c.9 0 1.652-.681 1.741-1.575l.66-6.6a.75.75 0 00-1.492-.15l-.66 6.6a.25.25 0 01-.249.225h-5.19a.25.25 0 01-.249-.225l-.66-6.6z" />
+                    </svg>
+                    Clear
+                </button>
+            </div>
+
+            <div class="collapsible" id="token-help">
+                <div class="help-text link">
+                    <svg class="note-icon" viewBox="0 0 16 16">
+                        <path
+                            d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.5 1.5 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+                    </svg>
+                    How to create a GitHub token? (Click to expand)
+                </div>
+            </div>
+
+            <div class="collapsible-content" id="token-instructions">
+                <div class="instructions">
+                    <h4>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path
+                                d="M8 0a8.2 8.2 0 0 1 .701.031C9.444.095 9.99.645 10.16 1.29l.288 1.107c.018.066.079.158.212.224.231.114.454.243.668.386.123.082.233.09.299.071l1.103-.303c.644-.176 1.392.021 1.82.63.27.385.506.792.704 1.218.315.675.111 1.422-.364 1.891l-.814.806c-.049.048-.098.147-.088.294.016.257.016.515 0 .772-.01.147.039.246.088.294l.814.806c.475.469.679 1.216.364 1.891a7.977 7.977 0 0 1-.704 1.218c-.428.609-1.176.806-1.82.63l-1.103-.303c-.066-.019-.176-.011-.299.071a4.909 4.909 0 0 1-.668.386c-.133.066-.194.158-.212.224l-.288 1.107c-.169.645-.715 1.195-1.459 1.259a8.006 8.006 0 0 1-1.402 0c-.744-.064-1.29-.614-1.459-1.259l-.288-1.107c-.018-.066-.079-.158-.212-.224a4.875 4.875 0 0 1-.668-.386c-.123-.082-.233-.09-.299-.071l-1.103.303c-.644.176-1.392-.021-1.82-.63a8.12 8.12 0 0 1-.704-1.218c-.315-.675-.111-1.422.363-1.891l.815-.806c.05-.048.098-.147.088-.294a6.214 6.214 0 0 1 0-.772c.01-.147-.038-.246-.088-.294l-.815-.806C.635 6.045.431 5.298.746 4.623a7.92 7.92 0 0 1 .704-1.217c.428-.61 1.176-.807 1.82-.631l1.103.303c.066.019.176.011.299-.071.214-.143.437-.272.668-.386.133-.066.194-.158.212-.224l.288-1.107C5.009.645 5.555.095 6.299.03 6.876-.025 7.124-.025 8 0Z" />
+                            <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-1.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z" />
+                        </svg>
+                        Step-by-step token creation:
+                    </h4>
+                    <ol>
+                        <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank"
+                                class="link">GitHub Token Settings</a></li>
+                        <li>Add a descriptive name (e.g., "Markdown Exporter")</li>
+                        <li>Set expiration date to "No expiration" (infinite)</li>
+                        <li>Select the appropriate <strong>resource owner</strong> (you or organization)</li>
+                        <li>Under "Repository access", choose:
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li><strong>All repositories</strong> (recommended for ease of use)</li>
+                                <li>Or <strong>Selected repositories</strong> (choose specific repos)</li>
+                            </ul>
+                        </li>
+                        <li>In the <strong>Permissions</strong> section, add:
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li><code>Issues</code> - Read access</li>
+                                <li><code>Pull requests</code> - Read access</li>
+                                <li><code>Discussions</code> - Read access</li>
+                                <li><code>Metadata</code> - Read access (usually auto-selected)</li>
+                            </ul>
+                        </li>
+                        <li>Click <strong>"Generate token"</strong></li>
+                        <li>Copy the generated token and paste it above</li>
+                    </ol>
+                </div>
+
+                <div class="note">
+                    <svg class="note-icon" viewBox="0 0 16 16">
+                        <path
+                            d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
+                    </svg>
+                    <strong>Note:</strong> The token is stored locally in your browser and never sent to any external
+                    servers. It's only used to authenticate with GitHub's API directly.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>
+                <svg class="section-icon" viewBox="0 0 16 16">
+                    <path
+                        d="M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0ZM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm.75 4.75a.75.75 0 0 0-1.5 0v2.5h-2.5a.75.75 0 0 0 0 1.5h2.5v2.5a.75.75 0 0 0 1.5 0v-2.5h2.5a.75.75 0 0 0 0-1.5h-2.5v-2.5Z" />
+                </svg>
+                Test Current Page
+            </h3>
+            <button type="button" class="btn btn-outline" id="test-page" style="width: 100%;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                        d="M1.679 7.932c.412-.621 1.242-1.75 2.366-2.717C5.175 4.242 6.527 3.5 8 3.5c1.473 0 2.824.742 3.955 1.715 1.124.967 1.954 2.096 2.366 2.717a.119.119 0 010 .136c-.412.621-1.242 1.75-2.366 2.717C10.825 11.758 9.473 12.5 8 12.5c-1.473 0-2.824-.742-3.955-1.715C2.92 9.818 2.09 8.69 1.679 8.068a.119.119 0 010-.136zM8 2c-1.981 0-3.67.992-4.933 2.078C1.797 5.169.88 6.423.43 7.1a1.619 1.619 0 000 1.798c.45.678 1.367 1.932 2.637 3.024C4.329 13.008 6.019 14 8 14c1.981 0 3.67-.992 4.933-2.078 1.27-1.092 2.187-2.346 2.637-3.024a1.619 1.619 0 000-1.798c-.45-.678-1.367-1.932-2.637-3.024C11.671 2.992 9.981 2 8 2zm0 8a2 2 0 100-4 2 2 0 000 4z" />
+                </svg>
+                Test Current Page
+            </button>
+        </div>
+        <!-- Made By -->
+        <div class="made-by">
+            <p>Made by <a href="https://github.com/fefedu973" target="_blank">Fefe_du_973</a></p>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
