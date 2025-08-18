@@ -54,6 +54,11 @@ class GitHubMarkdownExporter {
         .gh-markdown-export-arrow {
           fill: #5c626d;
         }
+
+        /* Pull Request specific: force arrow to inherit currentColor */
+        .gh-markdown-export-pr .gh-markdown-export-arrow {
+          fill: currentColor !important;
+        }
         
         .gh-markdown-export-menu {
           background: #ffffff;
@@ -79,7 +84,7 @@ class GitHubMarkdownExporter {
           }
           
           .gh-markdown-export-arrow {
-            fill: currentColor;
+            fill: #9198a1;
           }
           
           .gh-markdown-export-menu {
@@ -420,6 +425,7 @@ class GitHubMarkdownExporter {
       buttonGroup.className = 'gh-markdown-export-button-grow';
     } else if (isPullRequest) {
       buttonGroup.classList.add('gh-markdown-export-button-grow');
+      buttonGroup.classList.add('gh-markdown-export-pr');
     }
 
     // Adjust margins based on context
