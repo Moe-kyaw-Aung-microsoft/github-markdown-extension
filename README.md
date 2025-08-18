@@ -49,7 +49,7 @@
   <img src="demo.gif" alt="GitHub Markdown Exporter Demo" width="600">
 </div>
 
-Ever wanted to save GitHub issues, discussions, or pull requests for offline reading or documentation? This browser extension adds a "Copy to Markdown" button with powerful export options - including complete content, comments, metadata, and even pull request diffs!
+Ever wanted to retrieve GitHub issues, discussions, or pull requests easily to feed your favorite LLM or want to save them for offline reading? This browser extension adds a "Copy to Markdown" button with powerful export options - including complete content, comments, metadata, and even pull request diffs!
 
 **Why this extension?**
 
