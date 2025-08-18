@@ -49,13 +49,15 @@
   <img src="demo.gif" alt="GitHub Markdown Exporter Demo" width="600">
 </div>
 
-Ever wanted to save GitHub issues, discussions, or pull requests for offline reading or documentation? This browser extension adds a simple "Copy to Markdown" button that exports the complete content - including all comments and metadata - to perfectly formatted markdown!
+Ever wanted to save GitHub issues, discussions, or pull requests for offline reading or documentation? This browser extension adds a "Copy to Markdown" button with powerful export options - including complete content, comments, metadata, and even pull request diffs!
 
 **Why this extension?**
 
-- 🚀 **One-click export** - No complex setup or API tokens required
+- 🚀 **One-click export** - Copy to clipboard or download as file
 - 📱 **Works everywhere** - Issues, discussions, and pull requests
-- 🎨 **Beautiful output** - Clean, readable markdown format
+- 🎨 **Beautiful output** - Clean, readable markdown with full formatting
+- 🤖 **AI Integration** - Open directly in ChatGPT, Claude, or T3 Chat
+- 📊 **Complete Data** - Includes all comments, metadata, and PR diffs
 - 🌗 **Theme-aware** - Extension icon adapts to your browser theme
 - 🔒 **Privacy-first** - No data collection, everything stays local
 
@@ -66,16 +68,19 @@ Ever wanted to save GitHub issues, discussions, or pull requests for offline rea
 ### ✨ Core Features
 
 - **🎯 Smart Detection** - Automatically detects GitHub issues, discussions, and pull requests
-- **📋 One-Click Export** - Click the button and markdown is copied to your clipboard
+- **📋 Multiple Export Options** - Copy to clipboard, download as file, or open in AI platforms
+- **🤖 AI Platform Integration** - One-click export to ChatGPT, Claude, or T3 Chat for analysis
 - **🔄 Real-time Navigation** - Works with GitHub's single-page app navigation
 - **🌙 Theme-Aware Icons** - Extension icon automatically matches your browser theme
 
 ### 🛠️ Advanced Features
 
 - **🔐 Private Repository Support** - Optional GitHub token for private repos
+- **📊 Complete Content Export** - Includes all comments, metadata, and pull request diffs
 - **⚡ Rate Limit Protection** - Built-in handling for GitHub API limits
-- **🎨 Clean Markdown Output** - Professional formatting with metadata
+- **🎨 Professional Markdown** - Clean formatting with proper structure and metadata
 - **🔧 Cross-Browser Support** - Works on Chrome, Firefox, and Safari
+- **📱 Mobile Responsive** - Button placement adapts to mobile and desktop layouts
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -134,15 +139,27 @@ Ever wanted to save GitHub issues, discussions, or pull requests for offline rea
 2. **Look for the "Copy to Markdown" button**
 
    - Appears automatically near other action buttons
-   - Has a download icon 📥
+   - Has a dropdown arrow for additional options
+   - Button adapts to mobile and desktop layouts
 
-3. **Click the button**
+3. **Choose your export option:**
 
-   - Content is instantly copied to your clipboard
-   - Success message confirms the export
+   - **Main button**: Copy to clipboard instantly 📋
+   - **Dropdown menu**:
+     - 💾 **Save as File** - Download markdown file
+     - 🤖 **Open in ChatGPT** - Send content to ChatGPT for analysis
+     - 🧠 **Open in Claude** - Open in Claude AI
+     - 💬 **Open in T3 Chat** - Export to T3 Chat platform
 
-4. **Paste anywhere you need it!**
-   - Documentation, notes, reports - you name it! 📝
+4. **For Pull Requests**: Automatically includes diff information along with comments and discussions
+
+### Extension Popup Features
+
+Access additional functionality through the extension popup:
+
+1. **Token Management** - Set up GitHub tokens for private repositories
+2. **Current Page Export** - Export the current page you're viewing
+3. **Quick Access** - All export options available from the popup
 
 ### Private Repositories
 
@@ -161,7 +178,7 @@ For private repositories, you'll need a GitHub token:
 
 ## Example Output
 
-The extension generates clean, professional markdown:
+The extension generates clean, professional markdown with complete content:
 
 ```markdown
 # [Amazing Feature Request](https://github.com/owner/repo/issues/123)
@@ -169,6 +186,16 @@ The extension generates clean, professional markdown:
 > state: **open** opened by: **johndoe** on: **15/01/2024**
 
 This would be an amazing feature to add...
+
+### Pull Request Diff
+
+```diff
+@@ -1,3 +1,4 @@
+ function example() {
++  // Added new functionality
+   return true;
+ }
+```
 
 ### Comments
 
@@ -178,6 +205,13 @@ This would be an amazing feature to add...
 
 Great idea! I think we should also consider...
 ```
+
+**Features included in export:**
+- 📋 **Complete metadata** - State, author, dates, and links
+- 💬 **All comments** - Including author information and timestamps  
+- 🔄 **Pull request diffs** - Full code changes when exporting PRs
+- 🎨 **Clean formatting** - Professional markdown structure
+- 🔗 **Preserved links** - All GitHub links remain functional
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

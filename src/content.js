@@ -712,7 +712,7 @@ class GitHubMarkdownExporter {
   async openInChatGPT(pageInfo) {
     try {
       const markdown = await this.fetchAndFormatMarkdown(pageInfo);
-      const prompt = `Please analyze this ${pageInfo.type === 'pull' ? 'pull request' : pageInfo.type.slice(0, -1)} from GitHub:\n\n${markdown}`;
+      const prompt = `Please analyze this ${pageInfo.displayType === 'pull' ? 'pull request' : pageInfo.displayType.slice(0, -1)} from GitHub:\n\n${markdown}`;
       const encodedPrompt = encodeURIComponent(prompt);
       window.open(`https://chatgpt.com/?hints=search&q=${encodedPrompt}`, '_blank');
     } catch (error) {
@@ -723,7 +723,7 @@ class GitHubMarkdownExporter {
   async openInClaude(pageInfo) {
     try {
       const markdown = await this.fetchAndFormatMarkdown(pageInfo);
-      const prompt = `Please analyze this ${pageInfo.type === 'pull' ? 'pull request' : pageInfo.type.slice(0, -1)} from GitHub:\n\n${markdown}`;
+      const prompt = `Please analyze this ${pageInfo.displayType === 'pull' ? 'pull request' : pageInfo.displayType.slice(0, -1)} from GitHub:\n\n${markdown}`;
       const encodedPrompt = encodeURIComponent(prompt);
       window.open(`https://claude.ai/new?q=${encodedPrompt}`, '_blank');
     } catch (error) {
@@ -734,7 +734,7 @@ class GitHubMarkdownExporter {
   async openInT3Chat(pageInfo) {
     try {
       const markdown = await this.fetchAndFormatMarkdown(pageInfo);
-      const prompt = `Please analyze this ${pageInfo.type === 'pull' ? 'pull request' : pageInfo.type.slice(0, -1)} from GitHub:\n\n${markdown}`;
+      const prompt = `Please analyze this ${pageInfo.displayType === 'pull' ? 'pull request' : pageInfo.displayType.slice(0, -1)} from GitHub:\n\n${markdown}`;
       const encodedPrompt = encodeURIComponent(prompt);
       window.open(`https://t3.chat/new?q=${encodedPrompt}`, '_blank');
     } catch (error) {
@@ -1204,14 +1204,39 @@ class GitHubMarkdownExporter {
 
     console.log(`GitHub Markdown Exporter: Successfully fetched ${comments.length} comments`);
 
+    // For pull requests, also fetch diff information
+    let diffContent = '';
+    if (pageInfo.displayType === 'pull') {
+      try {
+        console.log('GitHub Markdown Exporter: Fetching pull request diff...');
+        const diffUrl = `https://api.github.com/repos/${owner}/${repo}/pulls/${number}`;
+        const diffResponse = await fetch(diffUrl, { 
+          headers: {
+            ...headers,
+            'Accept': 'application/vnd.github.v3.diff'
+          }
+        });
+        if (diffResponse.ok) {
+          diffContent = await diffResponse.text();
+          console.log(`GitHub Markdown Exporter: Successfully fetched diff (${diffContent.length} characters)`);
+        } else {
+          console.warn(`GitHub Markdown Exporter: Could not fetch diff: ${diffResponse.status}`);
+        }
+      } catch (error) {
+        console.warn('GitHub Markdown Exporter: Error fetching diff:', error);
+      }
+    }
+
     return {
       issue: mainData,
       comments: comments,
+      diff: diffContent,
       metadata: {
         total_comments: comments.length,
         fetched_at: new Date().toISOString().split('T')[0],
         issue_number: number,
-        repository: `${owner}/${repo}`
+        repository: `${owner}/${repo}`,
+        has_diff: !!diffContent
       }
     };
   }
@@ -1268,7 +1293,7 @@ class GitHubMarkdownExporter {
   }
 
   convertToMarkdown(data) {
-    const { issue, comments } = data;
+    const { issue, comments, diff } = data;
 
     // Format date
     const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString();
@@ -1277,6 +1302,11 @@ class GitHubMarkdownExporter {
     let markdown = `# [${issue.title}](${issue.html_url})\n\n`;
     markdown += `> state: **${issue.state}** opened by: **${issue.user.login}** on: **${formatDate(issue.created_at)}**\n\n`;
     markdown += `${issue.body || ''}\n\n`;
+
+    // Add diff content for pull requests
+    if (diff) {
+      markdown += `### Pull Request Diff\n\n\`\`\`diff\n${diff}\n\`\`\`\n\n`;
+    }
 
     if (comments && comments.length > 0) {
       markdown += `### Comments\n\n`;
