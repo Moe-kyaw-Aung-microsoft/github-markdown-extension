@@ -7,7 +7,7 @@ class GitHubMarkdownExporter {
   }
 
   addSpinAnimation() {
-    // Add spin animation CSS if not already present
+    // Add spin animation CSS and theme-aware styles if not already present
     if (!document.getElementById('github-markdown-exporter-animations')) {
       const style = document.createElement('style');
       style.id = 'github-markdown-exporter-animations';
@@ -15,6 +15,90 @@ class GitHubMarkdownExporter {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        
+        /* GitHub New Issue button flex-grow override */
+        .HeaderMenu-module__buttonContainer--Nazjm {
+          flex-grow: 0 !important;
+          margin-left: 0 !important;
+        }
+        
+        /* Copy to Markdown button takes remaining space on mobile only */
+        .gh-markdown-export-button-grow {
+          flex-grow: 1;
+        }
+        
+        @media screen and (min-width: 768px) {
+          .gh-markdown-export-button-grow {
+            flex-grow: 0;
+          }
+          .gh-header-actions.ml-1 {
+            width: auto !important;
+          }
+        }
+        
+        /* Pull request header actions container margin fix */
+        .gh-header-actions.ml-1 {
+          margin-left: 0 !important;
+          width: 100%;
+        }
+        
+        /* Mobile pull request layout order adjustments */
+        .flex-auto.text-right.d-block.d-md-none {
+          order: 3;
+        }
+        .gh-markdown-export-dropdown-border {
+          border-left-color: #d1d9e0;
+        }
+        
+        .gh-markdown-export-arrow {
+          fill: #5c626d;
+        }
+        
+        .gh-markdown-export-menu {
+          background: #ffffff;
+          border: 1px solid #d3d8df;
+          box-shadow: 0 8px 24px rgba(140, 149, 159, 0.15);
+        }
+        
+        .gh-markdown-export-menu-item {
+          color: #1f2328;
+        }
+        
+        .gh-markdown-export-menu-item:not(:last-child) {
+          border-bottom: 1px solid #e0e4e9;
+        }
+        
+        .gh-markdown-export-menu-item:hover {
+          background-color: #eff2f5;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+          .gh-markdown-export-dropdown-border {
+            border-left-color: #3f444c;
+          }
+          
+          .gh-markdown-export-arrow {
+            fill: currentColor;
+          }
+          
+          .gh-markdown-export-menu {
+            background: #020409;
+            border: 1px solid #3f444c;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+          }
+          
+          .gh-markdown-export-menu-item {
+            color: #e6edf3;
+          }
+          
+          .gh-markdown-export-menu-item:not(:last-child) {
+            border-bottom: 1px solid #2d3038;
+          }
+          
+          .gh-markdown-export-menu-item:hover {
+            background-color: #1f2328;
+          }
         }
       `;
       document.head.appendChild(style);
@@ -239,8 +323,12 @@ class GitHubMarkdownExporter {
 
     let addedCount = 0;
     containers.forEach((container, index) => {
-      // Skip hidden containers on desktop when we have visible ones
-      if (containers.length > 1 && this.isHidden(container)) {
+      // For issues, we want to add buttons to both desktop and mobile containers
+      // For PRs/discussions, skip truly hidden containers but allow mobile ones
+      const isMobileContainer = container.getAttribute('data-hidden-regular') === 'true';
+      const shouldSkip = containers.length > 1 && this.isHidden(container) && !isMobileContainer && !isIssue;
+
+      if (shouldSkip) {
         console.log(`GitHub Markdown Exporter: Skipping hidden container ${index + 1}`);
         return;
       }
@@ -249,31 +337,62 @@ class GitHubMarkdownExporter {
 
       // Special placement logic for Issues vs Pull Requests/Discussions
       if (isIssue) {
-        // For Issues: Place after the "New issue" button and BEFORE the Copy link button
-        // Identify buttons
+        // For Issues: Place after the "New issue" button and take remaining space
+        const newIssueButtonContainer = container.querySelector('.HeaderMenu-module__buttonContainer--Nazjm');
         const newIssueButton = container.querySelector('a[href$="/issues/new"], a[data-hotkey="c"]');
-        const copyLinkButton = container.querySelector('button[data-component="IconButton"][aria-labelledby]');
 
-        if (copyLinkButton) {
-          // Insert before copy link button (which keeps us to its left)
-          container.insertBefore(exportButton, copyLinkButton);
-        } else if (newIssueButton) {
-          // Fallback: insert right after New issue button
-          if (newIssueButton.nextSibling) {
-            newIssueButton.parentNode.insertBefore(exportButton, newIssueButton.nextSibling);
+        if (newIssueButtonContainer) {
+          // Insert after the New issue button container
+          const nextSibling = newIssueButtonContainer.nextElementSibling;
+          if (nextSibling) {
+            container.insertBefore(exportButton, nextSibling);
           } else {
-            newIssueButton.parentNode.appendChild(exportButton);
+            container.appendChild(exportButton);
+          }
+        } else if (newIssueButton) {
+          // Fallback: insert after New issue button
+          const nextSibling = newIssueButton.nextElementSibling;
+          if (nextSibling) {
+            container.insertBefore(exportButton, nextSibling);
+          } else {
+            container.appendChild(exportButton);
           }
         } else {
-          // Final fallback
-          container.appendChild(exportButton);
+          // Final fallback: place at beginning
+          if (container.firstChild) {
+            container.insertBefore(exportButton, container.firstChild);
+          } else {
+            container.appendChild(exportButton);
+          }
         }
       } else {
-        // For PRs/Discussions: Simply append and use CSS order for proper positioning
-        container.appendChild(exportButton);
-
+        // For PRs/Discussions: Place after Code button, before Jump to bottom
         if (isPullRequest) {
+          // Find Code button container
+          const codeButtonContainer = container.querySelector('get-repo, .flex-md-order-2');
+          // Find Jump to bottom link
+          const jumpToBottomContainer = container.querySelector('.flex-auto.text-right.d-block.d-md-none');
+
+          if (codeButtonContainer && jumpToBottomContainer) {
+            // Insert between Code button and Jump to bottom
+            container.insertBefore(exportButton, jumpToBottomContainer);
+          } else if (codeButtonContainer) {
+            // Insert after Code button
+            const nextSibling = codeButtonContainer.nextElementSibling;
+            if (nextSibling) {
+              container.insertBefore(exportButton, nextSibling);
+            } else {
+              container.appendChild(exportButton);
+            }
+          } else {
+            // Fallback: append at end
+            container.appendChild(exportButton);
+          }
+
           this.adjustPullRequestButtonSizing(container);
+        } else {
+          // Discussions: simply append
+          container.appendChild(exportButton);
         }
       }
 
@@ -296,24 +415,52 @@ class GitHubMarkdownExporter {
     const buttonGroup = document.createElement('div');
     buttonGroup.id = `${buttonId}-group`;
 
+    // Add flex-grow for issues and pull requests (mobile only via CSS media query)
+    if (isIssue) {
+      buttonGroup.className = 'gh-markdown-export-button-grow';
+    } else if (isPullRequest) {
+      buttonGroup.classList.add('gh-markdown-export-button-grow');
+    }
+
     // Adjust margins based on context
     let marginLeft = '0.25rem';
     if (isIssue) {
-      // In issues, no left margin to align with adjacent buttons
       marginLeft = '0';
     } else if (isPullRequest) {
-      // In discussions/PRs, no left margin - use CSS order for positioning
       marginLeft = '0';
+    } else if (isDiscussion) {
+      const hasEditButton = document.querySelector('.js-title-edit-button, .js-details-target[aria-label*="Edit"]');
+      marginLeft = hasEditButton ? '0.25rem' : '0';
     }
+
+    // For issues with flex-grow we don't want the dropdown menu to be positioned relative to the full-width flex item.
+    // We'll insert an inner wrapper that sizes to content and is position:relative; the outer container can still grow.
+    // Use inner wrapper when flex-grow is applied (issues & pull requests) so dropdown anchors to content width
+    const useInnerWrapper = isIssue || isPullRequest;
 
     buttonGroup.style.cssText = `
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 0;
       margin-left: ${marginLeft};
-      position: relative;
+      ${!useInnerWrapper ? 'position: relative;' : ''}
       ${isPullRequest ? 'order: 3;' : ''}
     `;
+
+    let targetContainer = buttonGroup; // where buttons & menu will be appended
+    if (useInnerWrapper) {
+      const inner = document.createElement('div');
+      inner.className = 'gh-markdown-export-inner';
+      inner.style.cssText = `
+        display: flex;
+        position: relative;
+        gap: 0;
+        width: max-content;
+        max-width: 100%;
+      `;
+      buttonGroup.appendChild(inner);
+      targetContainer = inner;
+    }
 
     // Create main export button (copy to clipboard)
     const exportButton = document.createElement('button');
@@ -340,24 +487,24 @@ class GitHubMarkdownExporter {
     // Create dropdown button
     const dropdownButton = document.createElement('button');
     dropdownButton.id = `${buttonId}-dropdown`;
-    dropdownButton.className = 'prc-Button-ButtonBase-c50BI';
+    dropdownButton.className = 'prc-Button-ButtonBase-c50BI gh-markdown-export-dropdown-border';
     dropdownButton.setAttribute('data-component', 'Button');
     dropdownButton.setAttribute('data-loading', 'false');
     dropdownButton.setAttribute('data-no-visuals', 'true');
     dropdownButton.setAttribute('data-size', 'medium');
     dropdownButton.setAttribute('data-variant', 'default');
+
     dropdownButton.style.cssText = `
-      border-left: 1px solid #3f444c;
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
-      padding-left: 8px;
-      padding-right: 8px;
+      padding-left: 7px;
+      padding-right: 7px;
       min-width: auto;
     `;
     dropdownButton.innerHTML = `
       <span data-component="buttonContent" data-align="center" class="prc-Button-ButtonContent-HKbr-">
-        <svg aria-hidden="true" focusable="false" class="octicon octicon-triangle-down" viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
-          <path d="m4.427 7.427 3.396 3.396a.25.25 0 0 0 .354 0l3.396-3.396A.25.25 0 0 0 11.396 7H4.604a.25.25 0 0 0-.177.427Z"/>
+        <svg aria-hidden="true" focusable="false" class="octicon octicon-triangle-down gh-markdown-export-arrow" viewBox="0 0 16 16" width="16" height="16" display="inline-block" overflow="visible" style="vertical-align: text-bottom;">
+          <path d="m4.427 7.427 3.396 3.396a.25.25 0 0 0 .354 0l3.396-3.396A.25.25 0 0 0 11.396 7H4.604a.25.25 0 0 0-.177.427Z"></path>
         </svg>
       </span>
     `;
@@ -386,9 +533,9 @@ class GitHubMarkdownExporter {
       }
     });
 
-    buttonGroup.appendChild(exportButton);
-    buttonGroup.appendChild(dropdownButton);
-    buttonGroup.appendChild(dropdownMenu);
+    targetContainer.appendChild(exportButton);
+    targetContainer.appendChild(dropdownButton);
+    targetContainer.appendChild(dropdownMenu);
 
     return buttonGroup;
   }
@@ -424,23 +571,50 @@ class GitHubMarkdownExporter {
         console.log('GitHub Markdown Exporter: Adjusted Code dropdown button to medium size');
       }
     }
+
+    // Fix ordering for the empty flex container using JavaScript
+    const emptyFlexContainer = container.querySelector('.d-flex.flex-order-2.flex-md-order-1.mx-2');
+    if (emptyFlexContainer) {
+      // Hide the empty flex container completely with !important
+      emptyFlexContainer.style.setProperty('display', 'none', 'important');
+      console.log('GitHub Markdown Exporter: Hidden empty flex container with !important');
+
+      // Listen for viewport changes to maintain the hidden state
+      const mediaQuery = window.matchMedia('(min-width: 768px)');
+      const handleViewportChange = (e) => {
+        emptyFlexContainer.style.setProperty('display', 'none', 'important');
+      };
+      mediaQuery.addListener(handleViewportChange);
+    }
+
+    // Set order for Edit button
+    if (editButton) {
+      editButton.style.order = '2';
+      console.log('GitHub Markdown Exporter: Set order 2 for Edit button');
+    }
+
+    // Set order for Code button container
+    const codeButtonContainer = container.querySelector('.flex-md-order-2');
+    if (codeButtonContainer && codeButtonContainer.querySelector('get-repo')) {
+      codeButtonContainer.style.order = '2';
+      console.log('GitHub Markdown Exporter: Set order 2 for Code button container');
+    }
   }
 
   createDropdownMenu(pageInfo, buttonId) {
     const menu = document.createElement('div');
     menu.id = `${buttonId}-menu`;
+    menu.className = 'gh-markdown-export-menu';
     menu.style.cssText = `
       display: none;
       position: absolute;
       top: 100%;
       right: 0;
       z-index: 1000;
-      background: #020409;
-      border: 1px solid #3f444c;
       border-radius: 6px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       min-width: 200px;
       margin-top: 4px;
+      overflow: hidden;
     `;
 
     const menuItems = [
@@ -476,15 +650,14 @@ class GitHubMarkdownExporter {
 
     menuItems.forEach((item, index) => {
       const menuItem = document.createElement('div');
+      menuItem.className = 'gh-markdown-export-menu-item';
       menuItem.style.cssText = `
         display: flex;
         align-items: center;
         gap: 8px;
         padding: 8px 12px;
         cursor: pointer;
-        border-bottom: ${index < menuItems.length - 1 ? '1px solid #3f444c' : 'none'};
         font-size: 14px;
-        color: #e6edf3;
       `;
 
       menuItem.innerHTML = `
@@ -497,14 +670,6 @@ class GitHubMarkdownExporter {
         e.preventDefault();
         menu.style.display = 'none';
         item.action();
-      });
-
-      menuItem.addEventListener('mouseenter', () => {
-        menuItem.style.backgroundColor = '#1f2328';
-      });
-
-      menuItem.addEventListener('mouseleave', () => {
-        menuItem.style.backgroundColor = 'transparent';
       });
 
       menu.appendChild(menuItem);
