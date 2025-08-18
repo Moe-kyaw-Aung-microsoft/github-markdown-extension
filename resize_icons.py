@@ -7,7 +7,7 @@ import os
 from PIL import Image
 
 # Directory containing the icons
-ICON_DIR = os.path.join(os.path.dirname(__file__), 'icons')
+ICON_DIR = os.path.join(os.path.dirname(__file__), 'src/icons')
 
 # Source icon filenames
 ICONS = [

@@ -2,7 +2,23 @@
 class GitHubMarkdownExporter {
   constructor() {
     this.isProcessing = false;
+    this.addSpinAnimation();
     this.init();
+  }
+
+  addSpinAnimation() {
+    // Add spin animation CSS if not already present
+    if (!document.getElementById('github-markdown-exporter-animations')) {
+      const style = document.createElement('style');
+      style.id = 'github-markdown-exporter-animations';
+      style.textContent = `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }
 
   init() {
@@ -15,6 +31,43 @@ class GitHubMarkdownExporter {
 
     // Listen for navigation changes (GitHub is a single-page application)
     this.setupNavigationListeners();
+
+    // Listen for messages from popup
+    this.setupMessageListener();
+  }
+
+  setupMessageListener() {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      if (request.action === 'triggerExport') {
+        const pageInfo = this.detectPageInfo();
+        if (pageInfo) {
+          // Try to click the export button if it exists
+          const exportBtn = document.querySelector('[id^="github-markdown-export-btn"]');
+          if (exportBtn) {
+            exportBtn.click();
+            sendResponse({ success: true, message: 'Export triggered' });
+          } else {
+            // Button doesn't exist, try to add it and then click
+            if (this.addExportButton()) {
+              setTimeout(() => {
+                const newExportBtn = document.querySelector('[id^="github-markdown-export-btn"]');
+                if (newExportBtn) {
+                  newExportBtn.click();
+                  sendResponse({ success: true, message: 'Export button added and triggered' });
+                } else {
+                  sendResponse({ success: false, message: 'Could not add export button' });
+                }
+              }, 100);
+            } else {
+              sendResponse({ success: false, message: 'Not on a supported page' });
+            }
+          }
+        } else {
+          sendResponse({ success: false, message: 'Not on a supported page' });
+        }
+      }
+      return true; // Keep message channel open
+    });
   }
 
   setupNavigationListeners() {
@@ -32,15 +85,15 @@ class GitHubMarkdownExporter {
     const self = this;
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
-    
-    history.pushState = function(...args) {
+
+    history.pushState = function (...args) {
       const result = originalPushState.apply(this, args);
       console.log('GitHub Markdown Exporter: PushState detected:', args[2] || args[0]);
       setTimeout(() => self.handleNavigation(), 200);
       return result;
     };
-    
-    history.replaceState = function(...args) {
+
+    history.replaceState = function (...args) {
       const result = originalReplaceState.apply(this, args);
       console.log('GitHub Markdown Exporter: ReplaceState detected:', args[2] || args[0]);
       setTimeout(() => self.handleNavigation(), 200);
@@ -86,7 +139,7 @@ class GitHubMarkdownExporter {
 
   handleNavigation() {
     console.log('GitHub Markdown Exporter: Handling navigation to:', window.location.href);
-    
+
     // Wait a bit for the page to load, then try to add button
     setTimeout(() => {
       this.addExportButtonWithRetry();
@@ -112,23 +165,23 @@ class GitHubMarkdownExporter {
 
   detectPageInfo() {
     const url = window.location.href;
-    const pathParts = url.split('/');
-    
-    if (pathParts.length < 7) return null;
-    
-    const owner = pathParts[3];
-    const repo = pathParts[4];
-    const type = pathParts[5]; // 'issues', 'discussions', or 'pull'
-    const number = pathParts[6];
-    
+    const pathParts = new URL(url).pathname.split('/').filter(part => part !== '');
+
+    if (pathParts.length < 4) return null;
+
+    const owner = pathParts[0];
+    const repo = pathParts[1];
+    const type = pathParts[2]; // 'issues', 'discussions', or 'pull'
+    const number = pathParts[3];
+
     // Validate we're on an issue, discussion, or pull request page
     if (!['issues', 'discussions', 'pull'].includes(type) || !number || isNaN(parseInt(number))) {
       return null;
     }
-    
+
     // Map 'pull' to 'issues' since GitHub API treats PRs as issues
     const apiType = type === 'pull' ? 'issues' : type;
-    
+
     return {
       owner,
       repo,
@@ -176,6 +229,18 @@ class GitHubMarkdownExporter {
   }
 
   createExportButton(pageInfo, buttonId) {
+    // Create button group container with spacing
+    const buttonGroup = document.createElement('div');
+    buttonGroup.id = `${buttonId}-group`;
+    buttonGroup.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-left: 8px;
+      position: relative;
+    `;
+
+    // Create main export button (copy to clipboard)
     const exportButton = document.createElement('button');
     exportButton.id = buttonId;
     exportButton.className = 'prc-Button-ButtonBase-c50BI';
@@ -186,32 +251,238 @@ class GitHubMarkdownExporter {
     exportButton.setAttribute('data-variant', 'default');
     exportButton.innerHTML = `
       <span data-component="buttonContent" data-align="center" class="prc-Button-ButtonContent-HKbr-">
-        <span data-component="leadingVisual" class="prc-Button-Visual-2szjw prc-Button-LeadingVisual-K5XKQ">
-          <svg aria-hidden="true" focusable="false" class="octicon octicon-download" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
-            <path fill-rule="evenodd" d="M7.47 10.78a.75.75 0 001.06 0l3.75-3.75a.75.75 0 00-1.06-1.06L8.75 8.44V1.75a.75.75 0 00-1.5 0v6.69L4.78 5.97a.75.75 0 00-1.06 1.06l3.75 3.75zM3.75 13a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5z"></path>
+        <span data-component="leadingVisual" class="prc-Button-Visual-2szjw prc-Button-LeadingVisual-K5XKQ" style="display: flex; align-items: center; justify-content: center;">
+          <svg aria-hidden="true" focusable="false" class="octicon octicon-copy" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+            <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/>
+            <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/>
           </svg>
         </span>
         <span data-component="text" class="prc-Button-Label-pTQ3x">Copy to Markdown</span>
       </span>
     `;
     exportButton.addEventListener('click', () => this.exportToMarkdown(pageInfo));
-    return exportButton;
+
+    // Create dropdown button
+    const dropdownButton = document.createElement('button');
+    dropdownButton.id = `${buttonId}-dropdown`;
+    dropdownButton.className = 'prc-Button-ButtonBase-c50BI';
+    dropdownButton.setAttribute('data-component', 'Button');
+    dropdownButton.setAttribute('data-loading', 'false');
+    dropdownButton.setAttribute('data-no-visuals', 'true');
+    dropdownButton.setAttribute('data-size', 'medium');
+    dropdownButton.setAttribute('data-variant', 'default');
+    dropdownButton.style.cssText = `
+      border-left: 1px solid #3f444c;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      padding-left: 8px;
+      padding-right: 8px;
+      min-width: auto;
+    `;
+    dropdownButton.innerHTML = `
+      <span data-component="buttonContent" data-align="center" class="prc-Button-ButtonContent-HKbr-">
+        <svg aria-hidden="true" focusable="false" class="octicon octicon-triangle-down" viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
+          <path d="m4.427 7.427 3.396 3.396a.25.25 0 0 0 .354 0l3.396-3.396A.25.25 0 0 0 11.396 7H4.604a.25.25 0 0 0-.177.427Z"/>
+        </svg>
+      </span>
+    `;
+
+    // Style the main button to connect with dropdown
+    exportButton.style.cssText = `
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      border-right: none;
+    `;
+
+    // Create dropdown menu
+    const dropdownMenu = this.createDropdownMenu(pageInfo, buttonId);
+
+    // Add click handler for dropdown toggle
+    dropdownButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Don't let processing state interfere with dropdown
+      this.toggleDropdown(dropdownMenu);
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!buttonGroup.contains(e.target)) {
+        dropdownMenu.style.display = 'none';
+      }
+    });
+
+    buttonGroup.appendChild(exportButton);
+    buttonGroup.appendChild(dropdownButton);
+    buttonGroup.appendChild(dropdownMenu);
+
+    return buttonGroup;
+  }
+
+  createDropdownMenu(pageInfo, buttonId) {
+    const menu = document.createElement('div');
+    menu.id = `${buttonId}-menu`;
+    menu.style.cssText = `
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 1000;
+      background: #020409;
+      border: 1px solid #3f444c;
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      min-width: 200px;
+      margin-top: 4px;
+    `;
+
+    const menuItems = [
+      {
+        icon: `<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                <path d="M7.47 10.78a.75.75 0 001.06 0l3.75-3.75a.75.75 0 00-1.06-1.06L8.75 8.44V1.75a.75.75 0 00-1.5 0v6.69L4.78 5.97a.75.75 0 00-1.06 1.06l3.75 3.75zM3.75 13a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5z"/>
+              </svg>`,
+        text: 'Save as File',
+        action: () => this.downloadAsFile(pageInfo)
+      },
+      {
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path xmlns="http://www.w3.org/2000/svg" d="M21.55 10.004a5.416 5.416 0 00-.478-4.501c-1.217-2.09-3.662-3.166-6.05-2.66A5.59 5.59 0 0010.831 1C8.39.995 6.224 2.546 5.473 4.838A5.553 5.553 0 001.76 7.496a5.487 5.487 0 00.691 6.5 5.416 5.416 0 00.477 4.502c1.217 2.09 3.662 3.165 6.05 2.66A5.586 5.586 0 0013.168 23c2.443.006 4.61-1.546 5.361-3.84a5.553 5.553 0 003.715-2.66 5.488 5.488 0 00-.693-6.497v.001zm-8.381 11.558a4.199 4.199 0 01-2.675-.954c.034-.018.093-.05.132-.074l4.44-2.53a.71.71 0 00.364-.623v-6.176l1.877 1.069c.02.01.033.029.036.05v5.115c-.003 2.274-1.87 4.118-4.174 4.123zM4.192 17.78a4.059 4.059 0 01-.498-2.763c.032.02.09.055.131.078l4.44 2.53c.225.13.504.13.73 0l5.42-3.088v2.138a.068.068 0 01-.027.057L9.9 19.288c-1.999 1.136-4.552.46-5.707-1.51h-.001zM3.023 8.216A4.15 4.15 0 015.198 6.41l-.002.151v5.06a.711.711 0 00.364.624l5.42 3.087-1.876 1.07a.067.067 0 01-.063.005l-4.489-2.559c-1.995-1.14-2.679-3.658-1.53-5.63h.001zm15.417 3.54l-5.42-3.088L14.896 7.6a.067.067 0 01.063-.006l4.489 2.557c1.998 1.14 2.683 3.662 1.529 5.633a4.163 4.163 0 01-2.174 1.807V12.38a.71.71 0 00-.363-.623zm1.867-2.773a6.04 6.04 0 00-.132-.078l-4.44-2.53a.731.731 0 00-.729 0l-5.42 3.088V7.325a.068.068 0 01.027-.057L14.1 4.713c2-1.137 4.555-.46 5.707 1.513.487.833.664 1.809.499 2.757h.001zm-11.741 3.81l-1.877-1.068a.065.065 0 01-.036-.051V6.559c.001-2.277 1.873-4.122 4.181-4.12.976 0 1.92.338 2.671.954-.034.018-.092.05-.131.073l-4.44 2.53a.71.71 0 00-.365.623l-.003 6.173v.002zm1.02-2.168L12 9.25l2.414 1.375v2.75L12 14.75l-2.415-1.375v-2.75z"/>
+              </svg>`,
+        text: 'Open in ChatGPT',
+        action: () => this.openInChatGPT(pageInfo)
+      },
+      {
+        icon: `<svg width="16" height="16" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24">
+                <path xmlns="http://www.w3.org/2000/svg" d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/>
+              </svg>`,
+        text: 'Open in Claude',
+        action: () => this.openInClaude(pageInfo)
+      },
+      {
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+              </svg>`,
+        text: 'Open in T3 Chat',
+        action: () => this.openInT3Chat(pageInfo)
+      }
+    ];
+
+    menuItems.forEach((item, index) => {
+      const menuItem = document.createElement('div');
+      menuItem.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: ${index < menuItems.length - 1 ? '1px solid #3f444c' : 'none'};
+        font-size: 14px;
+        color: #e6edf3;
+      `;
+
+      menuItem.innerHTML = `
+        ${item.icon} 
+        ${item.text}
+        ${item.text.startsWith('Open') ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: auto; opacity: 0.6;"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>' : ''}
+      `;
+
+      menuItem.addEventListener('click', (e) => {
+        e.preventDefault();
+        menu.style.display = 'none';
+        item.action();
+      });
+
+      menuItem.addEventListener('mouseenter', () => {
+        menuItem.style.backgroundColor = '#1f2328';
+      });
+
+      menuItem.addEventListener('mouseleave', () => {
+        menuItem.style.backgroundColor = 'transparent';
+      });
+
+      menu.appendChild(menuItem);
+    });
+
+    return menu;
+  }
+
+  toggleDropdown(menu) {
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async downloadAsFile(pageInfo) {
+    try {
+      const markdown = await this.fetchAndFormatMarkdown(pageInfo);
+      const filename = `${pageInfo.owner}-${pageInfo.repo}-${pageInfo.type}-${pageInfo.number}.md`;
+
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.showNotification('Downloaded as file successfully!', 'success');
+    } catch (error) {
+      this.showNotification('Download failed: ' + error.message, 'error');
+    }
+  }
+
+  async openInChatGPT(pageInfo) {
+    try {
+      const markdown = await this.fetchAndFormatMarkdown(pageInfo);
+      const prompt = `Please analyze this ${pageInfo.type === 'pull' ? 'pull request' : pageInfo.type.slice(0, -1)} from GitHub:\n\n${markdown}`;
+      const encodedPrompt = encodeURIComponent(prompt);
+      window.open(`https://chatgpt.com/?hints=search&q=${encodedPrompt}`, '_blank');
+    } catch (error) {
+      this.showNotification('Failed to open in ChatGPT: ' + error.message, 'error');
+    }
+  }
+
+  async openInClaude(pageInfo) {
+    try {
+      const markdown = await this.fetchAndFormatMarkdown(pageInfo);
+      const prompt = `Please analyze this ${pageInfo.type === 'pull' ? 'pull request' : pageInfo.type.slice(0, -1)} from GitHub:\n\n${markdown}`;
+      const encodedPrompt = encodeURIComponent(prompt);
+      window.open(`https://claude.ai/new?q=${encodedPrompt}`, '_blank');
+    } catch (error) {
+      this.showNotification('Failed to open in Claude: ' + error.message, 'error');
+    }
+  }
+
+  async openInT3Chat(pageInfo) {
+    try {
+      const markdown = await this.fetchAndFormatMarkdown(pageInfo);
+      const prompt = `Please analyze this ${pageInfo.type === 'pull' ? 'pull request' : pageInfo.type.slice(0, -1)} from GitHub:\n\n${markdown}`;
+      const encodedPrompt = encodeURIComponent(prompt);
+      window.open(`https://t3.chat/new?q=${encodedPrompt}`, '_blank');
+    } catch (error) {
+      this.showNotification('Failed to open in T3 Chat: ' + error.message, 'error');
+    }
+  }
+
+  async fetchAndFormatMarkdown(pageInfo) {
+    // Reuse the existing export logic
+    const response = await this.fetchGitHubData(pageInfo);
+    return this.convertToMarkdown(response);
   }
 
   findAllButtonContainers() {
     const containers = [];
-    
+
     // Strategy 1: Find all button containers (both visible and mobile-hidden)
     const buttonContainerSelectors = [
       // Main actions area (desktop)
       '[data-component="PH_Actions"] .HeaderMenu-module__menuActionsContainer--Gf9W9',
-      '.prc-PageHeader-Actions-ygtmj .HeaderMenu-module__menuActionsContainer--Gf9W9', 
+      '.prc-PageHeader-Actions-ygtmj .HeaderMenu-module__menuActionsContainer--Gf9W9',
       '.HeaderViewer-module__PageHeader_Actions--SRZVA .HeaderMenu-module__menuActionsContainer--Gf9W9',
-      
+
       // Context area (mobile)
       '.prc-PageHeader-ContextAreaActions-RTJRk .HeaderMenu-module__menuActionsContainer--Gf9W9',
       '.HeaderViewer-module__PageHeader_ContextAreaActions--zjX2m .HeaderMenu-module__menuActionsContainer--Gf9W9',
-      
+
       // Discussions
       '.gh-header-actions'
     ];
@@ -260,9 +531,9 @@ class GitHubMarkdownExporter {
     const visibleButtonContainerSelectors = [
       // Main actions area (always visible) - prioritize these
       '[data-component="PH_Actions"] .HeaderMenu-module__menuActionsContainer--Gf9W9',
-      '.prc-PageHeader-Actions-ygtmj .HeaderMenu-module__menuActionsContainer--Gf9W9', 
+      '.prc-PageHeader-Actions-ygtmj .HeaderMenu-module__menuActionsContainer--Gf9W9',
       '.HeaderViewer-module__PageHeader_Actions--SRZVA .HeaderMenu-module__menuActionsContainer--Gf9W9',
-      
+
       // Discussions - modern layout  
       '.gh-header-actions'
     ];
@@ -326,7 +597,7 @@ class GitHubMarkdownExporter {
 
   createButtonContainer() {
     // Try different strategies to create a button container
-    
+
     // Strategy 3a: For new issues UI - add to context area
     const contextArea = document.querySelector('.prc-PageHeader-ContextArea-6ykSJ, .HeaderViewer-module__headerContainer--kkVCB');
     if (contextArea) {
@@ -337,7 +608,7 @@ class GitHubMarkdownExporter {
       container.style.gap = '8px';
       container.style.alignItems = 'center';
       container.style.marginLeft = '8px';
-      
+
       // Find the best insertion point
       const existingActions = contextArea.querySelector('.prc-PageHeader-ContextAreaActions-RTJRk, .HeaderViewer-module__PageHeader_ContextAreaActions--zjX2m');
       if (existingActions) {
@@ -353,14 +624,14 @@ class GitHubMarkdownExporter {
     if (discussionHeader) {
       console.log('Creating container for discussion');
       let actionsContainer = discussionHeader.querySelector('.gh-header-actions');
-      
+
       if (!actionsContainer) {
         // Create the actions container
         actionsContainer = document.createElement('div');
         actionsContainer.className = 'gh-header-actions mt-0 mt-md-1 mb-2 mb-md-0 flex-shrink-0 d-flex';
         discussionHeader.appendChild(actionsContainer);
       }
-      
+
       return actionsContainer;
     }
 
@@ -377,7 +648,7 @@ class GitHubMarkdownExporter {
       const title = document.querySelector(selector);
       if (title) {
         console.log(`Creating container near title: ${selector}`);
-        
+
         // Find the header container
         let headerContainer = title.closest('[class*="HeaderViewer"], [class*="prc-PageHeader"], .gh-header');
         if (!headerContainer) {
@@ -394,7 +665,7 @@ class GitHubMarkdownExporter {
         container.style.alignItems = 'center';
         container.style.marginLeft = 'auto';
         container.style.marginRight = '0';
-        
+
         // Try to insert in the best location
         const titleArea = title.closest('[data-component="TitleArea"], .d-flex');
         if (titleArea && titleArea !== headerContainer) {
@@ -402,7 +673,7 @@ class GitHubMarkdownExporter {
         } else {
           headerContainer.appendChild(container);
         }
-        
+
         return container;
       }
     }
@@ -415,38 +686,67 @@ class GitHubMarkdownExporter {
     if (this.isProcessing) return;
 
     this.isProcessing = true;
-    
-    // Update all export buttons
-    const buttons = document.querySelectorAll('[id^="github-markdown-export-btn"]');
+
+    // Update all export buttons - just change the text, not the whole button
+    const buttons = document.querySelectorAll('[id^="github-markdown-export-btn"]:not([id$="-dropdown"])');
     const originalTexts = [];
-    
+
     buttons.forEach((button, index) => {
-      originalTexts[index] = button.innerHTML;
-      button.innerHTML = `
-        <span data-component="buttonContent" data-align="center" class="prc-Button-ButtonContent-HKbr-">
-          <span data-component="leadingVisual" class="prc-Button-Visual-2szjw prc-Button-LeadingVisual-K5XKQ">
-            <svg aria-hidden="true" focusable="false" class="octicon octicon-sync anim-rotate" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
-              <path fill-rule="evenodd" d="M8 2.5a5.487 5.487 0 00-4.131 1.869l1.204 1.204A.25.25 0 014.896 6H1.25A.25.25 0 011 5.75V2.104a.25.25 0 01.427-.177L2.623 3.123A7.48 7.48 0 018 .5c4.142 0 7.5 3.358 7.5 7.5a.75.75 0 01-1.5 0A6 6 0 008 2.5zM1.5 8a.75.75 0 01.75.75 6 6 0 006 6 5.487 5.487 0 004.131-1.869l-1.204-1.204a.25.25 0 01.177-.427h3.646a.25.25 0 01.25.25v3.646a.25.25 0 01-.427.177l-1.196-1.196A7.48 7.48 0 018 15.5c-4.142 0-7.5-3.358-7.5-7.5A.75.75 0 011.5 8z"></path>
-            </svg>
-          </span>
-          <span data-component="text" class="prc-Button-Label-pTQ3x">Exporting...</span>
-        </span>
-      `;
+      const textElement = button.querySelector('[data-component="text"]');
+      const iconElement = button.querySelector('[data-component="leadingVisual"] svg');
+      if (textElement) {
+        // Capture original text before changing it
+        originalTexts[index] = textElement.textContent;
+        textElement.textContent = 'Exporting...';
+      }
+      // Add spinning animation to icon
+      if (iconElement) {
+        iconElement.innerHTML = `
+          <path d="M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z" />
+        `;
+        iconElement.style.animation = 'spin 1s linear infinite';
+      }
       button.disabled = true;
+    });
+
+    // Keep dropdown buttons enabled
+    const dropdownButtons = document.querySelectorAll('[id$="-dropdown"]');
+    dropdownButtons.forEach(btn => {
+      btn.disabled = false;
     });
 
     try {
       const data = await this.fetchGitHubData(pageInfo);
       const markdown = this.convertToMarkdown(data);
       await this.copyToClipboard(markdown);
-      
-      // Success feedback
+
+      // Success feedback - change icon and text
       buttons.forEach((button, index) => {
-        button.innerHTML = `✓ Copied to Clipboard`;
+        const textElement = button.querySelector('[data-component="text"]');
+        const iconElement = button.querySelector('[data-component="leadingVisual"] svg');
+        if (textElement) {
+          textElement.textContent = 'Copied!';
+        }
+        if (iconElement) {
+          iconElement.innerHTML = `
+            <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+          `;
+          iconElement.style.animation = '';
+        }
         setTimeout(() => {
-          button.innerHTML = originalTexts[index];
+          if (textElement) {
+            // Always restore to the correct original text
+            textElement.textContent = 'Copy to Markdown';
+          }
+          if (iconElement) {
+            // Restore original copy icon
+            iconElement.innerHTML = `
+              <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/>
+              <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/>
+            `;
+          }
           button.disabled = false;
-          if (index === buttons.length - 1) { // Only reset processing flag after last button
+          if (index === buttons.length - 1) {
             this.isProcessing = false;
           }
         }, 2000);
@@ -454,14 +754,34 @@ class GitHubMarkdownExporter {
 
     } catch (error) {
       console.error('Export failed:', error);
-      
-      // Error feedback
+
+      // Error feedback - change icon and text
       buttons.forEach((button, index) => {
-        button.innerHTML = `✗ Export Failed`;
+        const textElement = button.querySelector('[data-component="text"]');
+        const iconElement = button.querySelector('[data-component="leadingVisual"] svg');
+        if (textElement) {
+          textElement.textContent = 'Failed';
+        }
+        if (iconElement) {
+          iconElement.innerHTML = `
+            <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"></path>
+          `;
+          iconElement.style.animation = '';
+        }
         setTimeout(() => {
-          button.innerHTML = originalTexts[index];
+          if (textElement) {
+            // Always restore to the correct original text
+            textElement.textContent = 'Copy to Markdown';
+          }
+          if (iconElement) {
+            // Restore original copy icon
+            iconElement.innerHTML = `
+              <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/>
+              <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/>
+            `;
+          }
           button.disabled = false;
-          if (index === buttons.length - 1) { // Only reset processing flag after last button
+          if (index === buttons.length - 1) {
             this.isProcessing = false;
           }
         }, 3000);
@@ -474,13 +794,13 @@ class GitHubMarkdownExporter {
 
   async fetchGitHubData(pageInfo) {
     const { owner, repo, type, number } = pageInfo;
-    
+
     console.log(`GitHub Markdown Exporter: Fetching data for ${owner}/${repo} ${pageInfo.displayType || type} #${number}`);
-    
+
     // Get stored token if available
     const result = await chrome.storage.sync.get(['githubToken']);
     const token = result.githubToken;
-    
+
     if (token) {
       console.log('GitHub Markdown Exporter: Token found, using authenticated requests');
       console.log(`GitHub Markdown Exporter: Token preview: ${token.substring(0, 10)}...`);
@@ -493,7 +813,7 @@ class GitHubMarkdownExporter {
       'User-Agent': 'GitHub-Markdown-Exporter',
       'X-GitHub-Api-Version': '2022-11-28'
     };
-    
+
     if (token) {
       // Use Bearer token format as recommended in GitHub docs
       headers['Authorization'] = `Bearer ${token}`;
@@ -504,16 +824,16 @@ class GitHubMarkdownExporter {
     // Fetch main issue/discussion
     const mainUrl = `https://api.github.com/repos/${owner}/${repo}/${type}/${number}`;
     console.log(`GitHub Markdown Exporter: Requesting main ${type.slice(0, -1)} from: ${mainUrl}`);
-    
+
     const mainResponse = await fetch(mainUrl, { headers });
-    
+
     console.log(`GitHub Markdown Exporter: Main request response status: ${mainResponse.status} ${mainResponse.statusText}`);
-    
+
     if (!mainResponse.ok) {
       // Log response details for debugging
       console.error('GitHub Markdown Exporter: Request failed');
       console.error('GitHub Markdown Exporter: Response headers:', Object.fromEntries(mainResponse.headers.entries()));
-      
+
       let errorText = '';
       try {
         const errorBody = await mainResponse.text();
@@ -522,7 +842,7 @@ class GitHubMarkdownExporter {
       } catch (e) {
         console.error('GitHub Markdown Exporter: Could not read response body:', e);
       }
-      
+
       if (mainResponse.status === 404) {
         if (token) {
           throw new Error(`${type.slice(0, -1)} not found. Check if the repository exists and your token has access to it.`);
@@ -534,7 +854,7 @@ class GitHubMarkdownExporter {
         const rateLimitReset = mainResponse.headers.get('x-ratelimit-reset');
         console.log(`GitHub Markdown Exporter: Rate limit remaining: ${rateLimitRemaining}`);
         console.log(`GitHub Markdown Exporter: Rate limit resets at: ${rateLimitReset}`);
-        
+
         if (token) {
           throw new Error('Access forbidden. Check if your token has the required permissions for this repository.');
         } else {
@@ -549,7 +869,7 @@ class GitHubMarkdownExporter {
       }
       throw new Error(`Failed to fetch ${type.slice(0, -1)}: ${mainResponse.status} ${mainResponse.statusText}`);
     }
-    
+
     const mainData = await mainResponse.json();
     console.log(`GitHub Markdown Exporter: Successfully fetched main ${type.slice(0, -1)}: ${mainData.title}`);
 
@@ -580,40 +900,40 @@ class GitHubMarkdownExporter {
     while (true) {
       const commentsUrl = `https://api.github.com/repos/${owner}/${repo}/${type}/${number}/comments?page=${page}&per_page=${perPage}`;
       console.log(`GitHub Markdown Exporter: Fetching comments page ${page} from: ${commentsUrl}`);
-      
+
       const response = await fetch(commentsUrl, { headers });
-      
+
       console.log(`GitHub Markdown Exporter: Comments page ${page} response status: ${response.status}`);
-      
+
       if (!response.ok) {
         console.error(`GitHub Markdown Exporter: Failed to fetch comments page ${page}`);
         console.error('GitHub Markdown Exporter: Comments response headers:', Object.fromEntries(response.headers.entries()));
-        
+
         try {
           const errorBody = await response.text();
           console.error('GitHub Markdown Exporter: Comments response body:', errorBody);
         } catch (e) {
           console.error('GitHub Markdown Exporter: Could not read comments response body:', e);
         }
-        
+
         throw new Error(`Failed to fetch comments: ${response.status} ${response.statusText}`);
       }
-      
+
       const comments = await response.json();
       console.log(`GitHub Markdown Exporter: Fetched ${comments.length} comments from page ${page}`);
-      
+
       if (comments.length === 0) {
         console.log('GitHub Markdown Exporter: No more comments, stopping pagination');
         break;
       }
-      
+
       allComments.push(...comments);
-      
+
       if (comments.length < perPage) {
         console.log('GitHub Markdown Exporter: Last page reached, stopping pagination');
         break;
       }
-      
+
       page++;
     }
 
@@ -623,25 +943,25 @@ class GitHubMarkdownExporter {
 
   convertToMarkdown(data) {
     const { issue, comments } = data;
-    
+
     // Format date
     const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString();
-    
+
     // Build markdown content
     let markdown = `# [${issue.title}](${issue.html_url})\n\n`;
     markdown += `> state: **${issue.state}** opened by: **${issue.user.login}** on: **${formatDate(issue.created_at)}**\n\n`;
     markdown += `${issue.body || ''}\n\n`;
-    
+
     if (comments && comments.length > 0) {
       markdown += `### Comments\n\n`;
-      
+
       for (const comment of comments) {
         markdown += `---\n`;
         markdown += `> from: [**${comment.user.login}**](${comment.user.html_url}) on: **${formatDate(comment.created_at)}**\n\n`;
         markdown += `${comment.body}\n`;
       }
     }
-    
+
     return markdown;
   }
 
@@ -661,6 +981,44 @@ class GitHubMarkdownExporter {
       document.execCommand('copy');
       textArea.remove();
     }
+  }
+
+  showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      background: ${type === 'success' ? '#28a745' : '#dc3545'};
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+    `;
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+
+    // Animate in
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      notification.style.transform = 'translateX(400px)';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
   }
 }
 

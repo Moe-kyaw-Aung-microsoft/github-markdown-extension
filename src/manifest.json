@@ -7,7 +7,8 @@
     "activeTab",
     "storage",
     "clipboardWrite",
-    "offscreen"
+    "offscreen",
+    "scripting"
   ],
   "host_permissions": [
     "https://github.com/*",
@@ -20,9 +21,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://github.com/*/*/issues/*",
-        "https://github.com/*/*/discussions/*",
-        "https://github.com/*/*/pull/*"
+        "https://github.com/*"
       ],
       "js": [
         "content.js"
