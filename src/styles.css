@@ -1,6 +1,6 @@
 /* GitHub Markdown Exporter - Content Script Styles */
 
-#github-markdown-export-btn {
+.gh-markdown-export-btn {
   /* Use GitHub's default button styling but add custom overrides */
   margin-left: 8px !important;
 
@@ -24,18 +24,18 @@
   transition: 80ms cubic-bezier(0.33, 1, 0.68, 1) !important;
 }
 
-#github-markdown-export-btn:hover {
+.gh-markdown-export-btn:hover {
   background-color: var(--button-default-bgColor-hover, #f3f4f6) !important;
   border-color: var(--button-default-borderColor-hover, #d0d7de) !important;
   text-decoration: none !important;
 }
 
-#github-markdown-export-btn:active {
+.gh-markdown-export-btn:active {
   background-color: var(--button-default-bgColor-active, #edeff2) !important;
   border-color: var(--button-default-borderColor-active, #d0d7de) !important;
 }
 
-#github-markdown-export-btn:disabled {
+.gh-markdown-export-btn:disabled {
   color: var(--fgColor-disabled, #8c959f) !important;
   background-color: var(--button-default-bgColor-rest, #f6f8fa) !important;
   border-color: var(--button-default-borderColor-rest, #d0d7de) !important;
@@ -43,12 +43,12 @@
   opacity: 0.6 !important;
 }
 
-#github-markdown-export-btn .octicon {
+.gh-markdown-export-btn .octicon {
   vertical-align: middle !important;
   fill: currentColor !important;
 }
 
-#github-markdown-export-btn .anim-rotate {
+.gh-markdown-export-btn .anim-rotate {
   animation: github-markdown-export-rotate 1s linear infinite !important;
 }
 
@@ -63,29 +63,29 @@
 }
 
 /* Ensure button fits well in different GitHub layouts */
-.gh-header-actions #github-markdown-export-btn {
+.gh-header-actions .gh-markdown-export-btn {
   height: 32px !important;
 }
 
-.timeline-comment-header #github-markdown-export-btn {
+.timeline-comment-header .gh-markdown-export-btn {
   height: 28px !important;
   font-size: 11px !important;
 }
 
 /* Dark mode support - rely on GitHub's CSS variables */
 @media (prefers-color-scheme: dark) {
-  #github-markdown-export-btn {
+  .gh-markdown-export-btn {
     color: var(--fgColor-default, #e6edf3) !important;
     background-color: var(--button-default-bgColor-rest, #21262d) !important;
     border-color: var(--button-default-borderColor-rest, #30363d) !important;
   }
 
-  #github-markdown-export-btn:hover {
+  .gh-markdown-export-btn:hover {
     background-color: var(--button-default-bgColor-hover, #30363d) !important;
     border-color: var(--button-default-borderColor-hover, #8b949e) !important;
   }
 
-  #github-markdown-export-btn:active {
+  .gh-markdown-export-btn:active {
     background-color: var(--button-default-bgColor-active, #282e33) !important;
     border-color: var(--button-default-borderColor-active, #6e7681) !important;
   }
