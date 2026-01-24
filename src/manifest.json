@@ -1,24 +1,22 @@
 {
   "manifest_version": 3,
   "name": "GitHub Markdown Exporter",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Export GitHub issues, discussions, pull requests, and wiki pages to markdown format",
   "permissions": [
     "activeTab",
     "storage",
     "clipboardWrite",
-    "offscreen",
-    "scripting"
+    "scripting",
+    "offscreen"
   ],
   "host_permissions": [
     "https://github.com/*",
     "https://api.github.com/*"
   ],
   "background": {
-    "service_worker": "background.js",
-    "scripts": [
-      "background.js"
-    ]
+    "service_worker": "background.ts",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -26,25 +24,20 @@
         "https://github.com/*"
       ],
       "js": [
-        "content.js"
+        "content.ts"
       ],
-      "css": [
-        "styles.css"
-      ]
-    },
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "toggleIcon.js"
-      ],
-      "run_at": "document_start"
+      "run_at": "document_idle"
     }
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "GitHub Markdown Exporter"
+    "default_title": "GitHub Markdown Exporter",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -52,6 +45,19 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/icon16-dark.png",
+        "icons/icon32-dark.png",
+        "icons/icon48-dark.png",
+        "icons/icon128-dark.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "browser_specific_settings": {
     "gecko": {
       "id": "githubmarkdownexporter@fefedu973.fr"
