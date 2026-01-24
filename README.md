@@ -17,7 +17,7 @@
   <h3 align="center">GitHub Markdown Exporter</h3>
 
   <p align="center">
-    Export GitHub issues, discussions, and pull requests to markdown with one click! ✨
+    Export GitHub issues, discussions, pull requests, and wiki pages to markdown with one click! ✨
     <br />
     <a href="#usage"><strong>See it in action »</strong></a>
     <br />
@@ -49,12 +49,13 @@
   <img src="demo.gif" alt="GitHub Markdown Exporter Demo" width="600">
 </div>
 
-Ever wanted to retrieve GitHub issues, discussions, or pull requests easily to feed your favorite LLM or want to save them for offline reading? This browser extension adds a "Copy to Markdown" button with powerful export options - including complete content, comments, metadata, and even pull request diffs!
+Ever wanted to retrieve GitHub issues, discussions, pull requests, or wiki documentation easily to feed your favorite LLM or want to save them for offline reading? This browser extension adds a "Copy to Markdown" button with powerful export options - including complete content, comments, metadata, and even pull request diffs!
 
 **Why this extension?**
 
 - 🚀 **One-click export** - Copy to clipboard or download as file
-- 📱 **Works everywhere** - Issues, discussions, and pull requests
+- 📱 **Works everywhere** - Issues, discussions, pull requests, and wiki pages
+- 📚 **Full Wiki Export** - Download entire wiki documentation in one click
 - 🎨 **Beautiful output** - Clean, readable markdown with full formatting
 - 🤖 **AI Integration** - Open directly in ChatGPT, Claude, or T3 Chat
 - 📊 **Complete Data** - Includes all comments, metadata, and PR diffs
@@ -67,8 +68,9 @@ Ever wanted to retrieve GitHub issues, discussions, or pull requests easily to f
 
 ### ✨ Core Features
 
-- **🎯 Smart Detection** - Automatically detects GitHub issues, discussions, and pull requests
+- **🎯 Smart Detection** - Automatically detects GitHub issues, discussions, pull requests, and wiki pages
 - **📋 Multiple Export Options** - Copy to clipboard, download as file, or open in AI platforms
+- **📚 Wiki Support** - Export single wiki pages or download entire wiki documentation
 - **🤖 AI Platform Integration** - One-click export to ChatGPT, Claude, or T3 Chat for analysis
 - **🔄 Real-time Navigation** - Works with GitHub's single-page app navigation
 - **🌙 Theme-Aware Icons** - Extension icon automatically matches your browser theme
@@ -137,13 +139,11 @@ Ever wanted to retrieve GitHub issues, discussions, or pull requests easily to f
    ```
 
 2. **Look for the "Copy to Markdown" button**
-
    - Appears automatically near other action buttons
    - Has a dropdown arrow for additional options
    - Button adapts to mobile and desktop layouts
 
 3. **Choose your export option:**
-
    - **Main button**: Copy to clipboard instantly 📋
    - **Dropdown menu**:
      - 💾 **Save as File** - Download markdown file

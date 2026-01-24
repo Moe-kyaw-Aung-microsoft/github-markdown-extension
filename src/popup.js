@@ -185,8 +185,30 @@ class PopupManager {
       const url = new URL(tab.url);
       const pathParts = url.pathname.split('/').filter(part => part !== '');
 
+      // Check for wiki pages (needs at least 3 parts: owner/repo/wiki)
+      if (pathParts.length >= 3 && pathParts[2] === 'wiki') {
+        const owner = pathParts[0];
+        const repo = pathParts[1];
+        const pageName = pathParts.length >= 4 ? pathParts.slice(3).join('/') : 'Home';
+
+        this.pageStatus.innerHTML = `
+          ✅ <strong>Wiki page detected:</strong><br>
+          📁 <code>${owner}/${repo}</code><br>
+          📄 Page: ${pageName}
+        `;
+
+        // Show copy button and export dropdown for wiki pages
+        if (this.copyToClipboardBtn) {
+          this.copyToClipboardBtn.style.display = 'flex';
+        }
+        if (this.exportDropdown) {
+          this.exportDropdown.style.display = 'block';
+        }
+        return;
+      }
+
       if (pathParts.length < 4 || !['issues', 'discussions', 'pull'].includes(pathParts[2])) {
-        this.pageStatus.innerHTML = '❌ Not on a supported page (issues, discussions, or pull requests)';
+        this.pageStatus.innerHTML = '❌ Not on a supported page (issues, discussions, pull requests, or wiki)';
         return;
       }
 
