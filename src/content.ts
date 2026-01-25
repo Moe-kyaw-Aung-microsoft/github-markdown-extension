@@ -979,9 +979,25 @@ async function handleItemsBulkExport(
   try {
     const items: Array<{ number: number; title: string; content: string; state: string }> = [];
 
+    // Helper to send progress updates
+    const sendProgress = (current: number, total: number) => {
+      chrome.runtime.sendMessage({
+        action: 'bulkExportProgress',
+        current,
+        total,
+      }).catch(() => {
+        // Ignore errors if popup is closed
+      });
+    };
+
     if (selectionMode === 'custom' && selectedItems) {
       // Fetch selected items
+      const total = selectedItems.length;
+      let current = 0;
       for (const selected of selectedItems) {
+        current++;
+        sendProgress(current, total);
+        
         const itemContent = await fetchItemContent(
           type, owner, repo, selected.number, token,
           includeComments ?? true, includeDiff ?? false
@@ -1028,6 +1044,9 @@ async function handleItemsBulkExport(
         // Fetch full content for each item
         for (const item of data) {
           if (items.length >= effectiveLimit) break;
+
+          // Send progress (estimate based on current count vs limit)
+          sendProgress(items.length + 1, Math.min(effectiveLimit, items.length + data.length));
 
           const itemContent = await fetchItemContent(
             type, owner, repo, item.number, token,

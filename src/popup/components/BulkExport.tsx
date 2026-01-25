@@ -33,6 +33,7 @@ export function BulkExport({ pageInfo, token }: BulkExportProps) {
   const [selectionMode, setSelectionMode] = useState<SelectionMode>('all');
   const [format, setFormat] = useState<ExportFormat>('markdown');
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -57,6 +58,7 @@ export function BulkExport({ pageInfo, token }: BulkExportProps) {
   const [isEditingRepo, setIsEditingRepo] = useState(false);
   const [customOwner, setCustomOwner] = useState('');
   const [customRepo, setCustomRepo] = useState('');
+  const [repoSearchInput, setRepoSearchInput] = useState('');
 
   // Repository search suggestions
   const [repoSuggestions, setRepoSuggestions] = useState<Array<{
@@ -163,7 +165,8 @@ export function BulkExport({ pageInfo, token }: BulkExportProps) {
     }
   }, [repoFeatures, exportType]);
 
-  const canBulkExport = pageInfo?.isGitHub && effectiveOwner && effectiveRepo;
+  // Allow bulk export when on GitHub OR when a custom repo is set
+  const canBulkExport = (pageInfo?.isGitHub || (customOwner && customRepo)) && effectiveOwner && effectiveRepo;
 
   // Load items when switching to custom selection mode
   const loadItems = useCallback(async () => {
@@ -503,10 +506,25 @@ export function BulkExport({ pageInfo, token }: BulkExportProps) {
 
   const selectedCount = items.filter(i => i.selected).length;
 
+  // Listen for progress updates from content script
+  useEffect(() => {
+    const handleMessage = (message: { action: string; current: number; total: number }) => {
+      if (message.action === 'bulkExportProgress') {
+        setExportProgress({ current: message.current, total: message.total });
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleMessage);
+    return () => {
+      chrome.runtime.onMessage.removeListener(handleMessage);
+    };
+  }, []);
+
   const handleBulkExport = async () => {
     if (!canBulkExport || !effectiveOwner || !effectiveRepo || !token) return;
 
     setIsExporting(true);
+    setExportProgress(null);
     setToast(null);
 
     try {
@@ -566,38 +584,9 @@ export function BulkExport({ pageInfo, token }: BulkExportProps) {
       });
     } finally {
       setIsExporting(false);
+      setExportProgress(null);
     }
   };
-
-  // Not on GitHub or no repo context
-  if (!canBulkExport) {
-    return (
-      <div className="bulk-export disabled">
-        <p className="hint">
-          Navigate to a GitHub repository to use bulk export.
-        </p>
-      </div>
-    );
-  }
-
-  // No token configured
-  if (!token) {
-    return (
-      <div className="bulk-export warning">
-        <svg viewBox="0 0 16 16" width="24" height="24" className="warning-icon">
-          <path
-            fill="currentColor"
-            d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"
-          />
-        </svg>
-        <p>A GitHub token is required for bulk export.</p>
-        <p className="hint">Go to Settings to configure your token.</p>
-      </div>
-    );
-  }
-
-  // State for repo search
-  const [repoSearchInput, setRepoSearchInput] = useState('');
 
   // Handle setting repo from search/URL input
   const handleSetRepoFromInput = () => {
@@ -711,6 +700,115 @@ export function BulkExport({ pageInfo, token }: BulkExportProps) {
     setShowSuggestions(false);
     setFeaturesCheckedForRepo(''); // Reset to trigger feature check
   };
+
+  // Not on GitHub and no custom repo set - show standalone repo search
+  if (!canBulkExport) {
+    return (
+      <div className="bulk-export">
+        <p className="hint" style={{ marginBottom: '12px' }}>
+          Search for a repository to get started with bulk export.
+        </p>
+        <div className="repo-search-container">
+          <div className="repo-search-row">
+            <input
+              type="text"
+              className="repo-search-input"
+              placeholder="Search repositories or enter owner/repo..."
+              value={repoSearchInput}
+              onChange={(e) => handleRepoSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSetRepoFromInput();
+                  setShowSuggestions(false);
+                } else if (e.key === 'Escape') {
+                  setShowSuggestions(false);
+                }
+              }}
+              onFocus={() => {
+                if (repoSuggestions.length > 0) {
+                  setShowSuggestions(true);
+                }
+              }}
+              onBlur={() => {
+                // Delay hiding to allow click on suggestion
+                setTimeout(() => setShowSuggestions(false), 200);
+              }}
+            />
+            {isLoadingSuggestions && (
+              <span className="repo-search-spinner">
+                <svg viewBox="0 0 16 16" width="14" height="14" className="spin">
+                  <path fill="currentColor" d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z" opacity="0.3" />
+                  <path fill="currentColor" d="M8 0a8 8 0 0 1 8 8h-1.5A6.5 6.5 0 0 0 8 1.5V0Z" />
+                </svg>
+              </span>
+            )}
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={() => {
+                handleSetRepoFromInput();
+                setShowSuggestions(false);
+              }}
+              disabled={!repoSearchInput.trim()}
+            >
+              Set
+            </button>
+          </div>
+
+          {/* Suggestions Dropdown */}
+          {showSuggestions && repoSuggestions.length > 0 && (
+            <div className="repo-suggestions">
+              {repoSuggestions.map((repo) => (
+                <button
+                  key={repo.full_name}
+                  type="button"
+                  className="repo-suggestion-item"
+                  onClick={() => selectRepoSuggestion(repo.full_name)}
+                >
+                  <div className="repo-suggestion-name">
+                    <svg viewBox="0 0 16 16" width="12" height="12">
+                      <path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z" />
+                    </svg>
+                    <span>{repo.full_name}</span>
+                  </div>
+                  {repo.description && (
+                    <div className="repo-suggestion-desc">{repo.description}</div>
+                  )}
+                  <div className="repo-suggestion-stars">
+                    <svg viewBox="0 0 16 16" width="10" height="10">
+                      <path fill="currentColor" d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
+                    </svg>
+                    <span>{repo.stargazers_count.toLocaleString()}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {!token && (
+          <p className="hint warning-text" style={{ marginTop: '12px' }}>
+            ⚠️ A GitHub token is required. Go to Settings to configure.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // No token configured
+  if (!token) {
+    return (
+      <div className="bulk-export warning">
+        <svg viewBox="0 0 16 16" width="24" height="24" className="warning-icon">
+          <path
+            fill="currentColor"
+            d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"
+          />
+        </svg>
+        <p>A GitHub token is required for bulk export.</p>
+        <p className="hint">Go to Settings to configure your token.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bulk-export">
@@ -1201,16 +1299,27 @@ export function BulkExport({ pageInfo, token }: BulkExportProps) {
         )}
       </button>
 
+      {/* Progress bar */}
+      {isExporting && exportProgress && (
+        <div className="export-progress">
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${(exportProgress.current / exportProgress.total) * 100}%` }}
+            />
+          </div>
+          <span className="progress-text">
+            {exportProgress.current} / {exportProgress.total}
+          </span>
+        </div>
+      )}
+
       {/* Toast notification */}
       {toast && (
         <div className={`toast ${toast.type}`}>
           {toast.text}
         </div>
       )}
-
-      <p className="hint">
-        Exports will be downloaded as a ZIP file containing markdown files.
-      </p>
     </div>
   );
 }
