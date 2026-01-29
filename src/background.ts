@@ -1,163 +1,102 @@
 /**
  * Background Service Worker
+ * Handles theme-aware icon updates (Chrome only - Firefox uses theme_icons in manifest)
  * 
- * Handles:
- * - Extension lifecycle events
- * - Theme-aware icon updates (dark/light mode)
- * - Cross-origin requests
+ * LIMITATION: Chrome does NOT expose its browser theme colors to extensions.
+ * This detects OS color scheme only, not Chrome's custom themes.
  */
 
-// ============================================================================
-// Icon Theme Management
-// ============================================================================
+// Icon paths for different UI themes
+// icon*.png = dark icons for light backgrounds
+// icon*-dark.png = light icons for dark backgrounds
+const ICONS_FOR_DARK_UI = {
+  "16": "icons/icon16-dark.png",
+  "32": "icons/icon32-dark.png",
+  "48": "icons/icon48-dark.png",
+  "128": "icons/icon128-dark.png"
+};
 
-type ThemeScheme = 'light' | 'dark';
+const ICONS_FOR_LIGHT_UI = {
+  "16": "icons/icon16.png",
+  "32": "icons/icon32.png",
+  "48": "icons/icon48.png",
+  "128": "icons/icon128.png"
+};
 
-/**
- * Update extension icon based on color scheme
- */
-function updateIcon(scheme: ThemeScheme): void {
-  const suffix = scheme === 'dark' ? '-dark' : '';
-  const iconPaths = {
-    16: `icons/icon16${suffix}.png`,
-    32: `icons/icon32${suffix}.png`,
-    48: `icons/icon48${suffix}.png`,
-    128: `icons/icon128${suffix}.png`,
-  };
-
-  chrome.action.setIcon({ path: iconPaths }).catch(() => {
-    // Fallback to light icons if dark icons don't exist
-    if (scheme === 'dark') {
-      updateIcon('light');
-    }
-  });
+/** Update toolbar icon based on color scheme */
+function updateIcon(scheme: string): void {
+  const iconPaths = scheme === "dark" ? ICONS_FOR_DARK_UI : ICONS_FOR_LIGHT_UI;
+  chrome.action.setIcon({ path: iconPaths }).catch(() => { });
 }
 
-// ============================================================================
-// Offscreen Document for Theme Detection (Chrome only)
-// ============================================================================
-
-// Check if Chrome (has offscreen API)
+// Check if running in Chrome (has offscreen API)
 const isChrome = typeof chrome.offscreen !== 'undefined';
 
-async function createOffscreenDocument(): Promise<boolean> {
+/** Create offscreen document for theme detection (Chrome only) */
+async function ensureOffscreenDocument(): Promise<boolean> {
   if (!isChrome) return false;
 
   try {
-    const existingContexts = await chrome.runtime.getContexts({
+    const offscreenUrl = chrome.runtime.getURL('offscreen.html');
+    const existingContexts = await chrome.runtime.getContexts?.({
       contextTypes: ['OFFSCREEN_DOCUMENT' as chrome.runtime.ContextType],
-      documentUrls: [chrome.runtime.getURL('offscreen.html')]
+      documentUrls: [offscreenUrl]
     });
 
-    if (existingContexts.length > 0) return true;
+    if (existingContexts && existingContexts.length > 0) return true;
 
     await chrome.offscreen.createDocument({
       url: 'offscreen.html',
-      reasons: [chrome.offscreen.Reason.DISPLAY_MEDIA],
-      justification: 'Detect user theme preference for icon adaptation'
+      reasons: ['DOM_SCRAPING' as chrome.offscreen.Reason],
+      justification: 'Detect prefers-color-scheme to update toolbar icon'
     });
 
     return true;
-  } catch (error) {
-    console.warn('[Background] Could not create offscreen document:', error);
+  } catch {
     return false;
   }
 }
 
-/**
- * Initialize theme detection using offscreen document
- */
+// Handle theme messages from offscreen document
+chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+  if (request.type === 'COLOR_SCHEME') {
+    const scheme = request.scheme || (request.dark ? 'dark' : 'light');
+    updateIcon(scheme);
+    sendResponse({ success: true });
+  }
+  return true;
+});
+
+/** Initialize theme detection */
 async function initializeTheme(): Promise<void> {
-  if (isChrome) {
-    const success = await createOffscreenDocument();
-    if (success) {
-      // Give offscreen document time to load
-      setTimeout(() => {
-        chrome.runtime.sendMessage({ action: 'detect-theme' }).catch(() => {
-          updateIcon('light');
-        });
-      }, 100);
-    } else {
-      updateIcon('light');
-    }
+  if (!isChrome) return; // Firefox uses theme_icons
+
+  const success = await ensureOffscreenDocument();
+  if (success) {
+    setTimeout(() => {
+      chrome.runtime.sendMessage({ action: 'detect-theme' }).catch(() => {
+        updateIcon('light');
+      });
+    }, 100);
   } else {
-    // Firefox or other browsers - default to light
     updateIcon('light');
   }
 }
 
-// ============================================================================
-// Message Handlers
-// ============================================================================
-
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  // Handle theme detection from content scripts or offscreen document
-  if (request.scheme || request.action === 'theme-detected') {
-    updateIcon(request.scheme as ThemeScheme);
-    sendResponse({ success: true });
-    return true;
-  }
-
-  // Handle token management
-  if (request.action === 'getToken') {
-    chrome.storage.sync.get(['githubToken'], (result) => {
-      sendResponse({ token: result.githubToken || null });
-    });
-    return true;
-  }
-
-  if (request.action === 'saveToken') {
-    chrome.storage.sync.set({ githubToken: request.token }, () => {
-      sendResponse({ success: true });
-    });
-    return true;
-  }
-
-  if (request.action === 'removeToken') {
-    chrome.storage.sync.remove(['githubToken'], () => {
-      sendResponse({ success: true });
-    });
-    return true;
-  }
-
-  return false;
-});
-
-// ============================================================================
-// Lifecycle Events
-// ============================================================================
-
-chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === 'install') {
-    console.log('[Background] Extension installed');
-  } else if (details.reason === 'update') {
-    console.log('[Background] Extension updated to version', chrome.runtime.getManifest().version);
-  }
-
-  // Initialize theme detection
+// Initialize on startup and install
+chrome.runtime.onStartup.addListener(initializeTheme);
+chrome.runtime.onInstalled.addListener(() => {
   initializeTheme();
-});
 
-chrome.runtime.onStartup.addListener(() => {
-  // Initialize theme detection on browser startup
-  initializeTheme();
-});
-
-// Handle extension icon click when popup is not available
-chrome.action.onClicked.addListener(async (tab) => {
-  if (!tab.id) return;
-
-  if (!tab.url?.includes('github.com')) {
-    console.log('[Background] Not on GitHub, ignoring click');
-    return;
-  }
-
-  try {
-    const response = await chrome.tabs.sendMessage(tab.id, { action: 'triggerExport' });
-    console.log('[Background] Export trigger response:', response);
-  } catch (error) {
-    console.warn('[Background] Could not communicate with content script:', error);
+  // Set up periodic theme check (backup for when service worker was suspended)
+  if (isChrome) {
+    chrome.alarms.create('check-theme', { periodInMinutes: 1 });
   }
 });
 
-console.log('[Background] Service worker started');
+// Handle periodic theme check alarm
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'check-theme') {
+    initializeTheme();
+  }
+});

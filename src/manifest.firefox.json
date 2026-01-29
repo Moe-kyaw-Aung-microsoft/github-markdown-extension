@@ -1,0 +1,90 @@
+{
+    "manifest_version": 3,
+    "name": "GitHub Markdown Exporter",
+    "version": "2.0.1",
+    "description": "Export GitHub issues, discussions, pull requests, and wiki pages to markdown format",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "clipboardWrite",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://github.com/*",
+        "https://api.github.com/*"
+    ],
+    "background": {
+        "scripts": [
+            "background.js"
+        ],
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://github.com/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "GitHub Markdown Exporter",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "32": "icons/icon32.png",
+            "48": "icons/icon48.png",
+            "128": "icons/icon128.png"
+        },
+        "theme_icons": [
+            {
+                "size": 16,
+                "light": "icons/icon16-dark.png",
+                "dark": "icons/icon16.png"
+            },
+            {
+                "size": 32,
+                "light": "icons/icon32-dark.png",
+                "dark": "icons/icon32.png"
+            },
+            {
+                "size": 48,
+                "light": "icons/icon48-dark.png",
+                "dark": "icons/icon48.png"
+            },
+            {
+                "size": 128,
+                "light": "icons/icon128-dark.png",
+                "dark": "icons/icon128.png"
+            }
+        ]
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "32": "icons/icon32.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "icons/icon16-dark.png",
+                "icons/icon32-dark.png",
+                "icons/icon48-dark.png",
+                "icons/icon128-dark.png"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "githubmarkdownexporter@fefedu973.fr",
+            "strict_min_version": "109.0"
+        }
+    }
+}

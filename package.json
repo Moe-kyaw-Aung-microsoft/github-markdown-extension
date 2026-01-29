@@ -1,16 +1,20 @@
 {
   "name": "github-markdown-exporter",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Export GitHub issues, discussions, pull requests, and wiki pages to markdown format",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --mode development",
-    "build": "vite build",
-    "build:firefox": "vite build --mode firefox",
+    "dev:firefox": "vite build --watch --mode firefox",
+    "build": "npm run clean && vite build --mode production",
+    "build:firefox": "npm run clean && vite build --mode firefox",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "package:chrome": "npm run build && cd dist && zip -r ../extension-chrome-v$npm_package_version.zip . && cd ..",
+    "package:firefox": "npm run build:firefox && cd dist && zip -r ../extension-firefox-v$npm_package_version.zip . && cd ..",
+    "package": "npm run package:chrome && npm run package:firefox"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.28",

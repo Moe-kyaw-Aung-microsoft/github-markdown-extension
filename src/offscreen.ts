@@ -1,24 +1,43 @@
 /**
- * Offscreen Document for Theme Detection
+ * Offscreen Document for Theme Detection (Chrome only)
  * 
- * This document runs in a hidden context and can access
- * window.matchMedia to detect the system color scheme.
+ * In MV3, service workers don't have DOM access, so we use an offscreen
+ * document to detect system color scheme via window.matchMedia.
+ * 
+ * Firefox uses theme_icons in manifest.json for automatic theme-aware icons.
  */
 
-function detectAndSendTheme(): void {
-  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+let lastReportedScheme: string | null = null;
+
+/**
+ * Send current color scheme to background service worker
+ * @param force - If true, always send even if scheme hasn't changed
+ */
+function reportColorScheme(force = false): void {
+  const currentScheme = mediaQuery.matches ? 'dark' : 'light';
+
+  // Skip if scheme hasn't changed (unless forced)
+  if (!force && currentScheme === lastReportedScheme) {
+    return;
+  }
+
+  lastReportedScheme = currentScheme;
+
   chrome.runtime.sendMessage({
-    action: 'theme-detected',
-    scheme: isDark ? 'dark' : 'light'
+    type: 'COLOR_SCHEME',
+    scheme: currentScheme,
+    dark: mediaQuery.matches
   }).catch(() => {
-    // Background may not be ready yet, ignore
+    // Reset so we retry next time
+    lastReportedScheme = null;
   });
 }
 
-// Listen for theme detection requests
+// Listen for theme detection requests from background
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'detect-theme') {
-    detectAndSendTheme();
+    reportColorScheme(true);
     sendResponse({ success: true });
     return true;
   }
@@ -26,7 +45,17 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 // Listen for system theme changes
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', detectAndSendTheme);
+mediaQuery.addEventListener('change', () => {
+  reportColorScheme(true);
+});
 
-// Detect theme immediately when document loads
-detectAndSendTheme();
+// Poll for theme changes every second (catches edge cases)
+setInterval(() => {
+  const currentScheme = mediaQuery.matches ? 'dark' : 'light';
+  if (currentScheme !== lastReportedScheme) {
+    reportColorScheme(true);
+  }
+}, 1000);
+
+// Report theme immediately when document loads
+reportColorScheme(true);
